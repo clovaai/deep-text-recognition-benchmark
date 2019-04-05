@@ -9,10 +9,12 @@ Such analyses clean up the hindrance on the current comparisons to understand th
 ## Getting Started
 ### Dependency
 - This work was tested with PyTorch 1.0.1, CUDA 9.0 and python 3.6. You may need `pip3 install torch==1.0.1`
-- requirements : lmdb, pillow, torchvision, torch-baidu-ctc, NLTK
+- requirements : lmdb, pillow, torchvision, NLTK, torch-baidu-ctc
 ```
-pip3 install lmdb pillow torchvision torch-baidu-ctc NLTK
+pip3 install lmdb pillow torchvision NLTK torch-baidu-ctc 
 ```
+- torch-baidu-ctc only supports Linux for now. If you need to use CTC with other OS, we recommend using the CTCLoss of Pytorch 1.1.0 (nightly version for now) for stable training.
+
 
 ### Download lmdb dataset for traininig and evaluation from [here](https://drive.google.com/drive/folders/192UfE9agQUMNq6AgU3_E05_FcPZK4hyt)
 training datasets : [MJSynth (MJ)](http://www.robots.ox.ac.uk/~vgg/data/text/)[1] and [SynthText (ST)](http://www.robots.ox.ac.uk/~vgg/data/scenetext/)[2] \
