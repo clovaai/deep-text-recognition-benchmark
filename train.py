@@ -131,13 +131,13 @@ def train(opt):
         batch_size = image.size(0)
 
         if 'CTC' in opt.Prediction:
-            preds = model(image, length, text)
+            preds = model(image, text)
             preds_size = torch.IntTensor([preds.size(1)] * batch_size)
             preds = preds.permute(1, 0, 2)  # to use CTCLoss format
             cost = criterion(preds, text, preds_size, length) / batch_size
 
         else:
-            preds = model(image, length, text)
+            preds = model(image, text)
             target = text[:, 1:]  # without [GO] Symbol
             cost = criterion(preds.view(-1, preds.shape[-1]), target.contiguous().view(-1))
 

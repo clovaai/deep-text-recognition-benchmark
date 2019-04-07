@@ -19,11 +19,10 @@ class Attention(nn.Module):
         one_hot = one_hot.scatter_(1, input_char, 1)
         return one_hot
 
-    def forward(self, batch_H, length, text, is_train=True, batch_max_length=25):
+    def forward(self, batch_H, text, is_train=True, batch_max_length=25):
         """
         input:
             batch_H : contextual_feature H = hidden state of encoder. [batch_size x num_steps x num_classes]
-            length : the length of each label. train: [3, 7, ....], test: [25, 25, 25, ...] [batch_size]
             text : the text-index of each image. [batch_size x (max_length+1)]. +1 for [GO] token. text[:, 0] = [GO].
         output: probability distribution at each step [batch_size x num_steps x num_classes]
         """

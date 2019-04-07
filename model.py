@@ -67,7 +67,7 @@ class Model(nn.Module):
         else:
             raise Exception('Prediction is neither CTC or Attn')
 
-    def forward(self, input, length, text, is_train=True):
+    def forward(self, input, text, is_train=True):
         """ Transformation stage """
         if not self.stages['Trans'] == "None":
             input = self.Transformation(input)
@@ -87,6 +87,6 @@ class Model(nn.Module):
         if self.stages['Pred'] == 'CTC':
             prediction = self.Prediction(contextual_feature.contiguous())
         else:
-            prediction = self.Prediction(contextual_feature.contiguous(), length, text, is_train)
+            prediction = self.Prediction(contextual_feature.contiguous(), text, is_train)
 
         return prediction

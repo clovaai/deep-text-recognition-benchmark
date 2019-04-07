@@ -85,7 +85,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
         start_time = time.time()
         if 'CTC' in opt.Prediction:
-            preds = model(image, length_for_pred, text_for_pred)
+            preds = model(image, text_for_pred)
             forward_time = time.time() - start_time
 
             # Calculate evaluation loss for CTC deocder.
@@ -99,7 +99,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             sim_preds = converter.decode(preds.data, preds_size.data)
 
         else:
-            preds = model(image, length_for_pred, text_for_pred, is_train=False)
+            preds = model(image, text_for_pred, is_train=False)
             forward_time = time.time() - start_time
 
             preds = preds[:, :text_for_loss.shape[1] - 1, :]
