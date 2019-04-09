@@ -54,7 +54,7 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
         evaluation_log += f'{name}: {accuracy}\t'
     evaluation_log += f'averaged_infer_time: {averaged_forward_time:0.3f}, # parameters: {params_num/1e6:0.3f}'
     print(evaluation_log)
-    with open(f'./result/{opt.name}/log_all_evaluation.txt', 'a') as log:
+    with open(f'./result/{opt.experiment_name}/log_all_evaluation.txt', 'a') as log:
         log.write(evaluation_log + '\n')
 
     return None
@@ -149,12 +149,12 @@ def test(opt):
     if opt.saved_model != '':
         print('loading pretrained model from %s' % opt.saved_model)
         model.load_state_dict(torch.load(opt.saved_model))
-        opt.name = '_'.join(opt.saved_model.split('/')[1:])
+        opt.experiment_name = '_'.join(opt.saved_model.split('/')[1:])
     # print(model)
 
     """ keep evaluation model and result logs """
-    os.makedirs(f'./result/{opt.name}', exist_ok=True)
-    os.system(f'cp {opt.saved_model} ./result/{opt.name}/')
+    os.makedirs(f'./result/{opt.experiment_name}', exist_ok=True)
+    os.system(f'cp {opt.saved_model} ./result/{opt.experiment_name}/')
 
     """ setup loss """
     if 'CTC' in opt.Prediction:
@@ -178,7 +178,7 @@ def test(opt):
             model, criterion, evaluation_loader, converter, opt)
 
         print(accuracy_by_best_model)
-        with open('./result/{0}/log_evaluation.txt'.format(opt.name), 'a') as log:
+        with open('./result/{0}/log_evaluation.txt'.format(opt.experiment_name), 'a') as log:
             log.write(str(accuracy_by_best_model) + '\n')
 
 

@@ -100,7 +100,7 @@ def train(opt):
 
     """ final options """
     # print(opt)
-    with open(f'./saved_models/{opt.name}/opt.txt', 'a') as opt_file:
+    with open(f'./saved_models/{opt.experiment_name}/opt.txt', 'a') as opt_file:
         opt_log = '------------ Options -------------\n'
         args = vars(opt)
         for k, v in args.items():
@@ -152,7 +152,7 @@ def train(opt):
         if i % opt.valInterval == 0:
             elapsed_time = time.time() - start_time
             print(f'[{i}/{opt.num_iter}] Loss: {loss_avg.val():0.5f} elapsed_time: {elapsed_time:0.5f}')
-            with open(f'./saved_models/{opt.name}/log_train_data.txt', 'a') as log:
+            with open(f'./saved_models/{opt.experiment_name}/log_train_data.txt', 'a') as log:
                 log.write(f'[{i}/{opt.num_iter}] Loss: {loss_avg.val():0.5f} elapsed_time: {elapsed_time:0.5f}\n')
             loss_avg.reset()
 
@@ -162,7 +162,7 @@ def train(opt):
             model.train()
 
             # for log
-            with open(f'./saved_models/{opt.name}/log_valid_data.txt', 'a') as log:
+            with open(f'./saved_models/{opt.experiment_name}/log_valid_data.txt', 'a') as log:
                 for pred, gt in zip(preds[:5], gts[:5]):
                     if 'CTC' not in opt.Prediction:
                         pred = pred[:pred.find('[s]')]
@@ -178,16 +178,16 @@ def train(opt):
             # keep best accuracy model
             if current_accuracy > best_accuracy:
                 best_accuracy = current_accuracy
-                torch.save(model.state_dict(), f'./saved_models/{opt.name}/best_accuracy.pth')
+                torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_accuracy.pth')
             if current_norm_ED < best_norm_ED:
                 best_norm_ED = current_norm_ED
-                torch.save(model.state_dict(), f'./saved_models/{opt.name}/best_norm_ED.pth')
+                torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_norm_ED.pth')
             print(f'best_accuracy: {best_accuracy:0.3f}, best_norm_ED: {best_norm_ED:0.2f}')
 
         # save model per 1e+5 iter.
         if (i + 1) % 1e+5 == 0:
             torch.save(
-                model.state_dict(), f'./saved_models/{opt.name}/iter_{i+1}.pth')
+                model.state_dict(), f'./saved_models/{opt.experiment_name}/iter_{i+1}.pth')
 
         if i == opt.num_iter:
             print('end the training')
@@ -197,7 +197,7 @@ def train(opt):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', help='Where to store logs and models')
+    parser.add_argument('--experiment_name', help='Where to store logs and models')
     parser.add_argument('--train_data', required=True, help='path to training dataset')
     parser.add_argument('--valid_data', required=True, help='path to validation dataset')
     parser.add_argument('--manualSeed', type=int, default=1111, help='for random seed setting')
@@ -237,12 +237,12 @@ if __name__ == '__main__':
 
     opt = parser.parse_args()
 
-    if not opt.name:
-        opt.name = f'{opt.Transformation}-{opt.FeatureExtraction}-{opt.SequenceModeling}-{opt.Prediction}'
-        opt.name += f'-Seed{opt.manualSeed}'
-        # print(opt.name)
+    if not opt.experiment_name:
+        opt.experiment_name = f'{opt.Transformation}-{opt.FeatureExtraction}-{opt.SequenceModeling}-{opt.Prediction}'
+        opt.experiment_name += f'-Seed{opt.manualSeed}'
+        # print(opt.experiment_name)
 
-    os.makedirs(f'./saved_models/{opt.name}', exist_ok=True)
+    os.makedirs(f'./saved_models/{opt.experiment_name}', exist_ok=True)
 
     """ vocab / character number configuration """
     if opt.sensitive:
