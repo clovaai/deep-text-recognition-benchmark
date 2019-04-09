@@ -7,7 +7,7 @@ import torch.nn.functional as F
 class TPS_SpatialTransformerNetwork(nn.Module):
     """ Rectification Network of RARE, namely TPS based STN """
 
-    def __init__(self, F, I_size, I_r_size, I_channel_num=1):
+    def __init__(self, F, I_size, I_r_size, batch_size, I_channel_num=1):
         """ Based on RARE TPS
         input:
             batch_I: Batch Input Image [batch_size x I_channel_num x I_height x I_width]
@@ -23,7 +23,7 @@ class TPS_SpatialTransformerNetwork(nn.Module):
         self.I_r_size = I_r_size  # = (I_r_height, I_r_width)
         self.I_channel_num = I_channel_num
         self.LocalizationNetwork = LocalizationNetwork(self.F, self.I_channel_num)
-        self.GridGenerator = GridGenerator(self.F, self.I_r_size)
+        self.GridGenerator = GridGenerator(self.F, self.I_r_size, batch_size)
 
     def forward(self, batch_I):
         batch_C_prime = self.LocalizationNetwork(batch_I)  # batch_size x K x 2
@@ -81,7 +81,7 @@ class LocalizationNetwork(nn.Module):
 class GridGenerator(nn.Module):
     """ Grid Generator of RARE, which produces P_prime by multipling T with P """
 
-    def __init__(self, F, I_r_size, batch_size=192):
+    def __init__(self, F, I_r_size, batch_size):
         """ Generate P_hat and inv_delta_C for later """
         super(GridGenerator, self).__init__()
         self.eps = 1e-6
