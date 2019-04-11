@@ -32,7 +32,7 @@ class Model(nn.Module):
         """ Transformation """
         if opt.Transformation == 'TPS':
             self.Transformation = TPS_SpatialTransformerNetwork(
-                F=opt.num_fiducial, I_size=(opt.imgH, opt.imgW), I_r_size=(opt.imgH, opt.imgW), batch_size=opt.batch_size, I_channel_num=opt.input_channel)
+                F=opt.num_fiducial, I_size=(opt.imgH, opt.imgW), I_r_size=(opt.imgH, opt.imgW), batch_size=int(opt.batch_size/opt.num_gpu), I_channel_num=opt.input_channel)
         else:
             print('No Transformation module specified')
 

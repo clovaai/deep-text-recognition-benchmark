@@ -89,11 +89,11 @@ class GridGenerator(nn.Module):
         self.F = F
         self.C = self._build_C(self.F)  # F x 2
         self.P = self._build_P(self.I_r_width, self.I_r_height)
-        self.inv_delta_C = torch.tensor(self._build_inv_delta_C(self.F, self.C)).float().cuda()  # F+3 x F+3
-        self.P_hat = torch.tensor(self._build_P_hat(self.F, self.C, self.P)).float().cuda()  # n x F+3
+        self.inv_delta_C = torch.tensor(self._build_inv_delta_C(self.F, self.C)).float()  # F+3 x F+3
+        self.P_hat = torch.tensor(self._build_P_hat(self.F, self.C, self.P)).float()  # n x F+3
 
-        self.batch_P_hat = self.P_hat.repeat(batch_size, 1, 1)  # n x F+3 -> batch_size x n x F+3
-        self.batch_inv_delta_C = self.inv_delta_C.repeat(batch_size, 1, 1)  # F+3 x F+3 -> batch_size x F+3 x F+3
+        self.register_buffer("batch_inv_delta_C", self.inv_delta_C.repeat(batch_size, 1, 1))
+        self.register_buffer("batch_P_hat", self.P_hat.repeat(batch_size, 1, 1))
 
     def _build_C(self, F):
         """ Return coordinates of fiducial points in I_r; C """
