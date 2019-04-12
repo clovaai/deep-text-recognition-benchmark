@@ -258,8 +258,14 @@ if __name__ == '__main__':
     opt.num_gpu = torch.cuda.device_count()
     # print('device count', opt.num_gpu)
     if opt.num_gpu > 1:
+        opt.num_iter = int(opt.num_iter / opt.num_gpu)
         opt.batch_size = opt.batch_size * opt.num_gpu
         opt.workers = opt.workers * opt.num_gpu
-        print('multiplied batch_size', opt.batch_size)
+        print('------ Use multi-GPU setting ------')
+        print('To equalize the number of epochs to 1-GPU setting, num_iter is divided with num_gpu by default.')
+        # If you dont care about it, just commnet out these line.)
+        print(f'The batch_size is multiplied with num_gpu and multiplied batch_size is {opt.batch_size}')
+        print('if you stuck too long time with multi-GPU setting, try to set --workers 0')
+        # check multi-GPU issue https://github.com/clovaai/deep-text-recognition-benchmark/issues/1
 
     train(opt)
