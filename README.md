@@ -52,9 +52,9 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py \
 ```
 
 ### Arguments
-* `--train_data`: forder path to training lmdb dataset.
-* `--valid_data`: forder path to validation lmdb dataset.
-* `--eval_data`: forder path to evaluation (with test.py) lmdb dataset.
+* `--train_data`: folder path to training lmdb dataset.
+* `--valid_data`: folder path to validation lmdb dataset.
+* `--eval_data`: folder path to evaluation (with test.py) lmdb dataset.
 * `--select_data`: select training data. default is MJ-ST, which means MJ and ST used as training data.
 * `--batch_ratio`: assign ratio for each selected data in the batch. default is 0.5-0.5, which means 50% of the batch is filled with MJ and the other 50% of the batch is filled ST.
 * `--Transformation`: select Transformation module [None | TPS].
