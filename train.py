@@ -149,17 +149,16 @@ def train(opt):
         if i % opt.valInterval == 0:
             elapsed_time = time.time() - start_time
             print(f'[{i}/{opt.num_iter}] Loss: {loss_avg.val():0.5f} elapsed_time: {elapsed_time:0.5f}')
-            with open(f'./saved_models/{opt.experiment_name}/log_train_data.txt', 'a') as log:
-                log.write(f'[{i}/{opt.num_iter}] Loss: {loss_avg.val():0.5f} elapsed_time: {elapsed_time:0.5f}\n')
-            loss_avg.reset()
-
-            model.eval()
-            valid_loss, current_accuracy, current_norm_ED, preds, gts, infer_time = validation(
-                model, criterion, valid_loader, converter, opt)
-            model.train()
-
             # for log
-            with open(f'./saved_models/{opt.experiment_name}/log_valid_data.txt', 'a') as log:
+            with open(f'./saved_models/{opt.experiment_name}/log_train.txt', 'a') as log:
+                log.write(f'[{i}/{opt.num_iter}] Loss: {loss_avg.val():0.5f} elapsed_time: {elapsed_time:0.5f}\n')
+                loss_avg.reset()
+
+                model.eval()
+                valid_loss, current_accuracy, current_norm_ED, preds, gts, infer_time = validation(
+                    model, criterion, valid_loader, converter, opt)
+                model.train()
+
                 for pred, gt in zip(preds[:5], gts[:5]):
                     if 'CTC' not in opt.Prediction:
                         pred = pred[:pred.find('[s]')]
@@ -172,14 +171,16 @@ def train(opt):
                 print(valid_log)
                 log.write(valid_log + '\n')
 
-            # keep best accuracy model
-            if current_accuracy > best_accuracy:
-                best_accuracy = current_accuracy
-                torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_accuracy.pth')
-            if current_norm_ED < best_norm_ED:
-                best_norm_ED = current_norm_ED
-                torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_norm_ED.pth')
-            print(f'best_accuracy: {best_accuracy:0.3f}, best_norm_ED: {best_norm_ED:0.2f}')
+                # keep best accuracy model
+                if current_accuracy > best_accuracy:
+                    best_accuracy = current_accuracy
+                    torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_accuracy.pth')
+                if current_norm_ED < best_norm_ED:
+                    best_norm_ED = current_norm_ED
+                    torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_norm_ED.pth')
+                best_model_log = f'best_accuracy: {best_accuracy:0.3f}, best_norm_ED: {best_norm_ED:0.2f}'
+                print(best_model_log)
+                log.write(best_model_log+'\n')
 
         # save model per 1e+5 iter.
         if (i + 1) % 1e+5 == 0:

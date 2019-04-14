@@ -208,5 +208,6 @@ if __name__ == '__main__':
 
     cudnn.benchmark = True
     cudnn.deterministic = True
+    opt.num_gpu = torch.cuda.device_count()
 
     test(opt)
