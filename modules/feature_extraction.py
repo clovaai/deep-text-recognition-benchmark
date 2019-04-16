@@ -3,6 +3,7 @@ import torch.nn.functional as F
 
 
 class VGG_FeatureExtractor(nn.Module):
+    """ FeatureExtractor of CRNN (https://arxiv.org/pdf/1507.05717.pdf) """
 
     def __init__(self, input_channel, output_channel=512):
         super(VGG_FeatureExtractor, self).__init__()
@@ -28,6 +29,7 @@ class VGG_FeatureExtractor(nn.Module):
 
 
 class RCNN_FeatureExtractor(nn.Module):
+    """ FeatureExtractor of GRCNN (https://papers.nips.cc/paper/6637-gated-recurrent-convolution-neural-network-for-ocr.pdf) """
 
     def __init__(self, input_channel, output_channel=512):
         super(RCNN_FeatureExtractor, self).__init__()
@@ -50,6 +52,7 @@ class RCNN_FeatureExtractor(nn.Module):
 
 
 class ResNet_FeatureExtractor(nn.Module):
+    """ FeatureExtractor of FAN (http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf) """
 
     def __init__(self, input_channel, output_channel=512):
         super(ResNet_FeatureExtractor, self).__init__()
