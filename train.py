@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
     """ vocab / character number configuration """
     if opt.sensitive:
-        opt.character = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        opt.character += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
     """ Seed and GPU setting """
     # print("Random Seed: ", opt.manualSeed)

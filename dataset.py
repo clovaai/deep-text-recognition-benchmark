@@ -147,6 +147,7 @@ class LmdbDataset(Dataset):
                 return
 
             if len(label) > self.opt.batch_max_length:
+                print(f'The length of the label is longer than max_length: length {len(label)}, {label} in dataset {self.root}')
                 return
 
             if not self.opt.sensitive:
