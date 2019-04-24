@@ -6,14 +6,14 @@ class CTCLabelConverter(object):
 
     def __init__(self, character):
         # character (str): set of the possible characters.
-        list_token = ['[blank]'] # dummy '[blank]' token for CTCLoss (index 0)
-        list_character = list(character)
-        self.character = list_token + list_character  
+        dict_character = list(character)
 
         self.dict = {}
-        for i, char in enumerate(list_character):
+        for i, char in enumerate(dict_character):
             # NOTE: 0 is reserved for 'blank' token required by CTCLoss
             self.dict[char] = i + 1
+
+        self.character = ['[blank]'] + dict_character  # dummy '[blank]' token for CTCLoss (index 0)
 
     def encode(self, text):
         """convert text-label into text-index.
