@@ -171,7 +171,7 @@ def test(opt):
             shuffle=False,
             num_workers=int(opt.workers),
             collate_fn=AlignCollate_evaluation, pin_memory=True)
-        _, accuracy_by_best_model, _, _, _, _, _ = validation(
+        _, accuracy_by_best_model, _, _, _, _ = validation(
             model, criterion, evaluation_loader, converter, opt)
 
         print(accuracy_by_best_model)
