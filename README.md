@@ -1,5 +1,5 @@
 # What is wrong with scene text recognition model comparisons? dataset and model analysis
-| [paper](https://arxiv.org/abs/1904.01906) | [download training and evaluation data](https://github.com/clovaai/deep-text-recognition-benchmark#download-lmdb-dataset-for-traininig-and-evaluation-from-here) | [download failure cases and cleansed label](https://github.com/clovaai/deep-text-recognition-benchmark#download-failure-cases-and-cleansed-label-from-here) |
+| [paper](https://arxiv.org/abs/1904.01906) | [download training and evaluation data](https://github.com/clovaai/deep-text-recognition-benchmark#download-lmdb-dataset-for-traininig-and-evaluation-from-here) | [download failure cases and cleansed label](https://github.com/clovaai/deep-text-recognition-benchmark#download-failure-cases-and-cleansed-label-from-here) | [download pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW) |
 
 PyTorch implementation of our four-stage STR framework, that most existing STR models fit into.
 Using this framework allows for the module-wise contributions to performance in terms of accuracy, speed, and memory demand, under one consistent set of training and evaluation datasets.
@@ -37,7 +37,7 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py \
 --Transformation None --FeatureExtraction VGG --SequenceModeling BiLSTM --Prediction CTC \
 --saved_model saved_models/None-VGG-BiLSTM-CTC-Seed1111/best_accuracy.pth
 ```
-3. Try to train and test our best accuracy combination (TPS-ResNet-BiLSTM-Attn) also.
+3. Try to train and test our best accuracy combination (TPS-ResNet-BiLSTM-Attn) also. ([download pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW))
 ```
 CUDA_VISIBLE_DEVICES=0 python3 train.py \
 --train_data data_lmdb_release/training --valid_data data_lmdb_release/validation \
