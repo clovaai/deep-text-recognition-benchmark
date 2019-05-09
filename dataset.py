@@ -129,7 +129,7 @@ class LmdbDataset(Dataset):
                 label = txn.get(label_key).decode('utf-8')
 
                 if len(label) > self.opt.batch_max_length:
-                    print(f'The length of the label is longer than max_length: length {len(label)}, {label} in dataset {self.root}')
+                    # print(f'The length of the label is longer than max_length: length {len(label)}, {label} in dataset {self.root}')
                     continue
 
                 self.filtered_index_list.append(index)
