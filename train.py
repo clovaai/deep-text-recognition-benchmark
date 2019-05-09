@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import random
+import string
 import argparse
 
 import torch
@@ -10,7 +11,6 @@ import torch.nn.init as init
 import torch.optim as optim
 import torch.utils.data
 import numpy as np
-from torch_baidu_ctc import CTCLoss
 
 from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
@@ -39,6 +39,7 @@ def train(opt):
     else:
         converter = AttnLabelConverter(opt.character)
     opt.num_class = len(converter.character)
+
     if opt.rgb:
         opt.input_channel = 3
     model = Model(opt)
@@ -72,7 +73,7 @@ def train(opt):
 
     """ setup loss """
     if 'CTC' in opt.Prediction:
-        criterion = CTCLoss(reduction='sum')
+        criterion = torch.nn.CTCLoss(zero_infinity=True).cuda()
     else:
         criterion = torch.nn.CrossEntropyLoss(ignore_index=0).cuda()  # ignore [GO] token = ignore index 0
     # loss averager
@@ -128,10 +129,10 @@ def train(opt):
         batch_size = image.size(0)
 
         if 'CTC' in opt.Prediction:
-            preds = model(image, text)
+            preds = model(image, text).log_softmax(2)
             preds_size = torch.IntTensor([preds.size(1)] * batch_size)
             preds = preds.permute(1, 0, 2)  # to use CTCLoss format
-            cost = criterion(preds, text, preds_size, length) / batch_size
+            cost = criterion(preds, text, preds_size, length)
 
         else:
             preds = model(image, text)
@@ -155,7 +156,7 @@ def train(opt):
                 loss_avg.reset()
 
                 model.eval()
-                valid_loss, current_accuracy, current_norm_ED, preds, gts, infer_time = validation(
+                valid_loss, current_accuracy, current_norm_ED, preds, gts, infer_time, length_of_data = validation(
                     model, criterion, valid_loader, converter, opt)
                 model.train()
 
@@ -245,7 +246,8 @@ if __name__ == '__main__':
 
     """ vocab / character number configuration """
     if opt.sensitive:
-        opt.character += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        # opt.character += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
 
     """ Seed and GPU setting """
     # print("Random Seed: ", opt.manualSeed)
