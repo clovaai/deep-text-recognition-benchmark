@@ -8,10 +8,10 @@ Such analyses clean up the hindrance on the current comparisons to understand th
 
 ## Getting Started
 ### Dependency
-- This work was tested with PyTorch 1.0.1, CUDA 9.0, python 3.6 and Ubuntu 16.04. <br> You may need `pip3 install torch==1.0.1`
-- requirements : lmdb, pillow, torchvision, nltk, torch-baidu-ctc
+- This work was tested with PyTorch 1.1.0, CUDA 9.0, python 3.6 and Ubuntu 16.04. <br> You may need `pip3 install torch==1.1.0`
+- requirements : lmdb, pillow, torchvision, nltk
 ```
-pip3 install lmdb pillow torchvision nltk torch-baidu-ctc 
+pip3 install lmdb pillow torchvision nltk
 ```
 
 
