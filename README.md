@@ -6,6 +6,9 @@ Using this framework allows for the module-wise contributions to performance in 
 Such analyses clean up the hindrance on the current comparisons to understand the performance gain of the existing modules. <br><br>
 <img src="./figures/trade-off.jpg" width="1000" title="trade-off">
 
+## Updates
+**Mar 9, 2019**: PyTorch version updated from 1.0.1 to 1.1.0, use torch.nn.CTCLoss instead of torch-baidu-ctc, and various minor updated.
+
 ## Getting Started
 ### Dependency
 - This work was tested with PyTorch 1.1.0, CUDA 9.0, python 3.6 and Ubuntu 16.04. <br> You may need `pip3 install torch==1.1.0`
