@@ -32,7 +32,7 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
     print('-' * 80)
     for eval_data in eval_data_list:
         eval_data_path = os.path.join(opt.eval_data, eval_data)
-        AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW)
+        AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
         eval_data = hierarchical_dataset(root=eval_data_path, opt=opt)
         evaluation_loader = torch.utils.data.DataLoader(
             eval_data, batch_size=evaluation_batch_size,
@@ -172,7 +172,7 @@ def test(opt):
     if opt.benchmark_all_eval:  # evaluation with 10 benchmark evaluation datasets
         benchmark_all_eval(model, criterion, converter, opt)
     else:
-        AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW)
+        AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
         eval_data = hierarchical_dataset(root=opt.eval_data, opt=opt)
         evaluation_loader = torch.utils.data.DataLoader(
             eval_data, batch_size=opt.batch_size,
@@ -201,6 +201,7 @@ if __name__ == '__main__':
     parser.add_argument('--rgb', action='store_true', help='use rgb input')
     parser.add_argument('--character', type=str, default='0123456789abcdefghijklmnopqrstuvwxyz', help='character label')
     parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')
+    parser.add_argument('--PAD', action='store_true', help='whether to keep ratio then pad for image resize')
     """ Model Architecture """
     parser.add_argument('--Transformation', type=str, required=True, help='Transformation stage. None|TPS')
     parser.add_argument('--FeatureExtraction', type=str, required=True, help='FeatureExtraction stage. VGG|RCNN|ResNet')
