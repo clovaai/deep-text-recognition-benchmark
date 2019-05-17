@@ -7,6 +7,7 @@ Such analyses clean up the hindrance on the current comparisons to understand th
 <img src="./figures/trade-off.jpg" width="1000" title="trade-off">
 
 ## Updates
+**Mar 17, 2019**: uploaded resources in [Baidu Netdisk(password:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ), added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo) updated. (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab version demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
 **Mar 9, 2019**: PyTorch version updated from 1.0.1 to 1.1.0, use torch.nn.CTCLoss instead of torch-baidu-ctc, and various minor updated.
 
 ## Getting Started
@@ -17,12 +18,37 @@ Such analyses clean up the hindrance on the current comparisons to understand th
 pip3 install lmdb pillow torchvision nltk
 ```
 
-
 ### Download lmdb dataset for traininig and evaluation from [here](https://drive.google.com/drive/folders/192UfE9agQUMNq6AgU3_E05_FcPZK4hyt)
 data_lmdb_release.zip contains below. <br>
 training datasets : [MJSynth (MJ)](http://www.robots.ox.ac.uk/~vgg/data/text/)[1] and [SynthText (ST)](http://www.robots.ox.ac.uk/~vgg/data/scenetext/)[2] \
 validation datasets : the union of the training sets [IC13](http://rrc.cvc.uab.es/?ch=2)[3], [IC15](http://rrc.cvc.uab.es/?ch=4)[4], [IIIT](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html)[5], and [SVT](http://www.iapr-tc11.org/mediawiki/index.php/The_Street_View_Text_Dataset)[6].\
 evaluation datasets : benchmark evaluation datasets, consist of [IIIT](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html)[5], [SVT](http://www.iapr-tc11.org/mediawiki/index.php/The_Street_View_Text_Dataset)[6], [IC03](http://www.iapr-tc11.org/mediawiki/index.php/ICDAR_2003_Robust_Reading_Competitions)[7], [IC13](http://rrc.cvc.uab.es/?ch=2)[3], [IC15](http://rrc.cvc.uab.es/?ch=4)[4], [SVTP](http://openaccess.thecvf.com/content_iccv_2013/papers/Phan_Recognizing_Text_with_2013_ICCV_paper.pdf)[8], and [CUTE](http://cs-chan.com/downloads_CUTE80_dataset.html)[9].
+
+### Run demo with pretrained model
+1. Download pretrained model from [here](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW)
+2. Add image files to test into `demo_image/`
+3. Run demo.py (add `--sensitive` option if you use case-sensitive model)
+```
+CUDA_VISIBLE_DEVICES=6 python3 demo.py \
+--Transformation TPS --FeatureExtraction ResNet --SequenceModeling BiLSTM --Prediction Attn \
+--image_folder demo_image/ \
+--saved_model TPS-ResNet-BiLSTM-Attn.pth
+```
+
+#### prediction results
+
+| demo images | [TPS-ResNet-BiLSTM-Attn](https://drive.google.com/open?id=1b59rXuGGmKne1AuHnkgDzoYgKeETNMv9) | [TPS-ResNet-BiLSTM-Attn (case-sensitive)](https://drive.google.com/open?id=1ajONZOgiG9pEYsQ-eBmgkVbMDuHgPCaY) |
+| ---         |     ---      |          --- |
+| <img src="./demo_image/demo_1.png" width="300">    |   available   |  Available   |
+| <img src="./demo_image/demo_2.jpg" width="300">      |    shakeshack    |   SHARESHACK    |
+| <img src="./demo_image/demo_3.png" width="300">  |   london   |  Londen   |
+| <img src="./demo_image/demo_4.png" width="300">      |    greenstead    |   Greenstead    |
+| <img src="./demo_image/demo_5.png" width="300" height="100">    |   toast   |  TOAST   |
+| <img src="./demo_image/demo_6.png" width="300" height="100">      |    merry    |   MERRY    |
+| <img src="./demo_image/demo_7.png" width="300">    |   underground   |   underground  |
+| <img src="./demo_image/demo_8.jpg" width="300">      |    ronaldo    |    RONALDO   |
+| <img src="./demo_image/demo_9.jpg" width="300" height="100">    |   bally   |   BALLY  |
+| <img src="./demo_image/demo_10.jpg" width="300" height="100">      |    university    |   UNIVERSITY    |
 
 
 ### Training and evaluation
