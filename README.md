@@ -7,7 +7,7 @@ Such analyses clean up the hindrance on the current comparisons to understand th
 <img src="./figures/trade-off.jpg" width="1000" title="trade-off">
 
 ## Updates
-**Mar 17, 2019**: uploaded resources in [Baidu Netdisk(password:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ), added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo) updated. (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab version demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
+**Mar 17, 2019**: uploaded resources in [Baidu Netdisk(password:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ), added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo-with-pretrained-model) updated. (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab version demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
 **Mar 9, 2019**: PyTorch version updated from 1.0.1 to 1.1.0, use torch.nn.CTCLoss instead of torch-baidu-ctc, and various minor updated.
 
 ## Getting Started
