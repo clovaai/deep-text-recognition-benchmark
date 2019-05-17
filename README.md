@@ -1,5 +1,6 @@
 # What is wrong with scene text recognition model comparisons? dataset and model analysis
-| [paper](https://arxiv.org/abs/1904.01906) | [download training and evaluation data](https://github.com/clovaai/deep-text-recognition-benchmark#download-lmdb-dataset-for-traininig-and-evaluation-from-here) | [download failure cases and cleansed label](https://github.com/clovaai/deep-text-recognition-benchmark#download-failure-cases-and-cleansed-label-from-here) | [download pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW) |
+| [paper](https://arxiv.org/abs/1904.01906) | [download training and evaluation data](https://github.com/clovaai/deep-text-recognition-benchmark#download-lmdb-dataset-for-traininig-and-evaluation-from-here) | [download failure cases and cleansed label](https://github.com/clovaai/deep-text-recognition-benchmark#download-failure-cases-and-cleansed-label-from-here) | [download pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW) | <br>
+| [download resources from Baidu Netdisk (password:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ) |
 
 PyTorch implementation of our four-stage STR framework, that most existing STR models fit into.
 Using this framework allows for the module-wise contributions to performance in terms of accuracy, speed, and memory demand, under one consistent set of training and evaluation datasets.
@@ -7,7 +8,7 @@ Such analyses clean up the hindrance on the current comparisons to understand th
 <img src="./figures/trade-off.jpg" width="1000" title="trade-off">
 
 ## Updates
-**Mar 17, 2019**: uploaded resources in [Baidu Netdisk(password:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ), added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo-with-pretrained-model) updated. (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab version demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
+**Mar 17, 2019**: uploaded resources in [Baidu Netdisk (password:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ), added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo-with-pretrained-model). (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab version demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
 **Mar 9, 2019**: PyTorch version updated from 1.0.1 to 1.1.0, use torch.nn.CTCLoss instead of torch-baidu-ctc, and various minor updated.
 
 ## Getting Started
