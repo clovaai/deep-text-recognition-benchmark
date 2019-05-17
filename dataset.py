@@ -130,7 +130,8 @@ class LmdbDataset(Dataset):
                 label = txn.get(label_key).decode('utf-8')
 
                 if len(label) > self.opt.batch_max_length:
-                    # print(f'The length of the label is longer than max_length: length {len(label)}, {label} in dataset {self.root}')
+                    # print(f'The length of the label is longer than max_length: length
+                    # {len(label)}, {label} in dataset {self.root}')
                     continue
 
                 self.filtered_index_list.append(index)
@@ -176,6 +177,39 @@ class LmdbDataset(Dataset):
             label = re.sub(out_of_char, '', label)
 
         return (img, label)
+
+
+class RawDataset(Dataset):
+
+    def __init__(self, root, opt):
+        self.opt = opt
+        self.image_path_list = []
+        for dirpath, dirnames, filenames in os.walk(root):
+            for name in filenames:
+                self.image_path_list.append(os.path.join(dirpath, name))
+
+        self.nSamples = len(self.image_path_list)
+
+    def __len__(self):
+        return self.nSamples
+
+    def __getitem__(self, index):
+
+        try:
+            if self.opt.rgb:
+                img = Image.open(self.image_path_list[index]).convert('RGB')  # for color image
+            else:
+                img = Image.open(self.image_path_list[index]).convert('L')
+
+        except IOError:
+            print(f'Corrupted image for {index}')
+            # make dummy image and dummy label for corrupted image.
+            if self.opt.rgb:
+                img = Image.new('RGB', (self.opt.imgW, self.opt.imgH))
+            else:
+                img = Image.new('L', (self.opt.imgW, self.opt.imgH))
+
+        return (img, self.image_path_list[index])
 
 
 class ResizeNormalize(object):

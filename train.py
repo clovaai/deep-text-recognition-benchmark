@@ -123,9 +123,9 @@ def train(opt):
         for p in model.parameters():
             p.requires_grad = True
 
-        cpu_images, cpu_texts = train_dataset.get_batch()
-        image = cpu_images.cuda()
-        text, length = converter.encode(cpu_texts)
+        image_tensors, labels = train_dataset.get_batch()
+        image = image_tensors.cuda()
+        text, length = converter.encode(labels)
         batch_size = image.size(0)
 
         if 'CTC' in opt.Prediction:
@@ -156,12 +156,12 @@ def train(opt):
                 loss_avg.reset()
 
                 model.eval()
-                valid_loss, current_accuracy, current_norm_ED, preds, gts, infer_time, length_of_data = validation(
+                valid_loss, current_accuracy, current_norm_ED, preds, labels, infer_time, length_of_data = validation(
                     model, criterion, valid_loader, converter, opt)
                 model.train()
 
-                for pred, gt in zip(preds[:5], gts[:5]):
-                    if 'CTC' not in opt.Prediction:
+                for pred, gt in zip(preds[:5], labels[:5]):
+                    if 'Attn' in opt.Prediction:
                         pred = pred[:pred.find('[s]')]
                         gt = gt[:gt.find('[s]')]
                     print(f'{pred:20s}, gt: {gt:20s},   {str(pred == gt)}')

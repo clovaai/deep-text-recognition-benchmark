@@ -72,21 +72,20 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
     n_correct = 0
     norm_ED = 0
-    max_length = opt.batch_max_length
     length_of_data = 0
     infer_time = 0
     valid_loss_avg = Averager()
 
-    for i, (cpu_images, cpu_texts) in enumerate(evaluation_loader):
-        batch_size = cpu_images.size(0)
+    for i, (image_tensors, labels) in enumerate(evaluation_loader):
+        batch_size = image_tensors.size(0)
         length_of_data = length_of_data + batch_size
         with torch.no_grad():
-            image = cpu_images.cuda()
+            image = image_tensors.cuda()
             # For max length prediction
-            length_for_pred = torch.cuda.IntTensor([max_length] * batch_size)
-            text_for_pred = torch.cuda.LongTensor(batch_size, max_length + 1).fill_(0)
+            length_for_pred = torch.cuda.IntTensor([opt.batch_max_length] * batch_size)
+            text_for_pred = torch.cuda.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
 
-            text_for_loss, length_for_loss = converter.encode(cpu_texts)
+            text_for_loss, length_for_loss = converter.encode(labels)
 
         start_time = time.time()
         if 'CTC' in opt.Prediction:
@@ -99,9 +98,9 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             cost = criterion(preds, text_for_loss, preds_size, length_for_loss)
 
             # Select max probabilty (greedy decoding) then decode index to character
-            _, preds = preds.max(2)
-            preds = preds.transpose(1, 0).contiguous().view(-1)
-            sim_preds = converter.decode(preds.data, preds_size.data)
+            _, preds_index = preds.max(2)
+            preds_index = preds_index.transpose(1, 0).contiguous().view(-1)
+            preds_str = converter.decode(preds_index.data, preds_size.data)
 
         else:
             preds = model(image, text_for_pred, is_train=False)
@@ -113,15 +112,15 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
             # select max probabilty (greedy decoding) then decode index to character
             _, preds_index = preds.max(2)
-            sim_preds = converter.decode(preds_index, length_for_pred)
-            cpu_texts = converter.decode(text_for_loss[:, 1:], length_for_loss)
+            preds_str = converter.decode(preds_index, length_for_pred)
+            labels = converter.decode(text_for_loss[:, 1:], length_for_loss)
 
         infer_time += forward_time
         valid_loss_avg.add(cost)
 
         # calculate accuracy.
-        for pred, gt in zip(sim_preds, cpu_texts):
-            if 'CTC' not in opt.Prediction:
+        for pred, gt in zip(preds_str, labels):
+            if 'Attn' in opt.Prediction:
                 pred = pred[:pred.find('[s]')]  # prune after "end of sentence" token ([s])
                 gt = gt[:gt.find('[s]')]
 
@@ -131,7 +130,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
     accuracy = n_correct / float(length_of_data) * 100
 
-    return valid_loss_avg.val(), accuracy, norm_ED, sim_preds, cpu_texts, infer_time, length_of_data
+    return valid_loss_avg.val(), accuracy, norm_ED, preds_str, labels, infer_time, length_of_data
 
 
 def test(opt):
@@ -151,10 +150,9 @@ def test(opt):
     model = torch.nn.DataParallel(model).cuda()
 
     # load model
-    if opt.saved_model != '':
-        print('loading pretrained model from %s' % opt.saved_model)
-        model.load_state_dict(torch.load(opt.saved_model))
-        opt.experiment_name = '_'.join(opt.saved_model.split('/')[1:])
+    print('loading pretrained model from %s' % opt.saved_model)
+    model.load_state_dict(torch.load(opt.saved_model))
+    opt.experiment_name = '_'.join(opt.saved_model.split('/')[1:])
     # print(model)
 
     """ keep evaluation model and result logs """
@@ -193,7 +191,7 @@ if __name__ == '__main__':
     parser.add_argument('--benchmark_all_eval', action='store_true', help='evaluate 10 benchmark evaluation datasets')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
     parser.add_argument('--batch_size', type=int, default=192, help='input batch size')
-    parser.add_argument('--saved_model', default='', help="path to saved_model to evaluation")
+    parser.add_argument('--saved_model', required=True, help="path to saved_model to evaluation")
     """ Data processing """
     parser.add_argument('--batch_max_length', type=int, default=25, help='maximum-label-length')
     parser.add_argument('--imgH', type=int, default=32, help='the height of the input image')
