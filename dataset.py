@@ -187,7 +187,10 @@ class RawDataset(Dataset):
         self.image_path_list = []
         for dirpath, dirnames, filenames in os.walk(root):
             for name in filenames:
-                self.image_path_list.append(os.path.join(dirpath, name))
+                _, ext = os.path.splitext(name)
+                ext = ext.lower()
+                if ext == '.jpg' or ext == '.jpeg' or ext == '.png':
+                    self.image_path_list.append(os.path.join(dirpath, name))
 
         self.image_path_list = natsorted(self.image_path_list)
         self.nSamples = len(self.image_path_list)
