@@ -13,9 +13,9 @@ Such analyses clean up the hindrance on the current comparisons to understand th
 ## Getting Started
 ### Dependency
 - This work was tested with PyTorch 1.1.0, CUDA 9.0, python 3.6 and Ubuntu 16.04. <br> You may need `pip3 install torch==1.1.0`
-- requirements : lmdb, pillow, torchvision, nltk
+- requirements : lmdb, pillow, torchvision, nltk, natsort
 ```
-pip3 install lmdb pillow torchvision nltk
+pip3 install lmdb pillow torchvision nltk natsort
 ```
 
 ### Download lmdb dataset for traininig and evaluation from [here](https://drive.google.com/drive/folders/192UfE9agQUMNq6AgU3_E05_FcPZK4hyt)
