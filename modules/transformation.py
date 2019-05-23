@@ -109,7 +109,6 @@ class GridGenerator(nn.Module):
             for j in range(i, F):
                 r = np.linalg.norm(C[i] - C[j])
                 hat_C[i, j] = r
-                hat_C[j, i] = r
         np.fill_diagonal(hat_C, 1)
         hat_C = (hat_C ** 2) * np.log(hat_C)
         # print(C.shape, hat_C.shape)
