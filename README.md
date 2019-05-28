@@ -6,6 +6,10 @@ Using this framework allows for the module-wise contributions to performance in 
 Such analyses clean up the hindrance on the current comparisons to understand the performance gain of the existing modules. <br><br>
 <img src="./figures/trade-off.jpg" width="1000" title="trade-off">
 
+## Honors
+Based on this framework, we recorded the 1st place of [ICDAR2013 focused scene text](https://rrc.cvc.uab.es/?ch=2&com=evaluation&task=3), [ICDAR2019 ArT](https://rrc.cvc.uab.es/files/ICDAR2019-ArT.pdf) and 3rd place of [ICDAR2017 COCO-Text](https://rrc.cvc.uab.es/?ch=5&com=evaluation&task=2), [ICDAR2019 ReCTS(task1)](https://rrc.cvc.uab.es/files/ICDAR2019-ReCTS.pdf). <br>
+The difference between our paper and ICDAR challenge is summarized [here](https://github.com/clovaai/deep-text-recognition-benchmark/issues/13).
+
 ## Updates
 **Mar 17, 2019**: uploaded resources in Baidu Netdisk also, added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo-with-pretrained-model). (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
 **Mar 9, 2019**: PyTorch version updated from 1.0.1 to 1.1.0, use torch.nn.CTCLoss instead of torch-baidu-ctc, and various minor updated.
