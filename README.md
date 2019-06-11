@@ -11,8 +11,8 @@ Based on this framework, we recorded the 1st place of [ICDAR2013 focused scene t
 The difference between our paper and ICDAR challenge is summarized [here](https://github.com/clovaai/deep-text-recognition-benchmark/issues/13).
 
 ## Updates
-**Mar 17, 2019**: uploaded resources in Baidu Netdisk also, added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo-with-pretrained-model). (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
-**Mar 9, 2019**: PyTorch version updated from 1.0.1 to 1.1.0, use torch.nn.CTCLoss instead of torch-baidu-ctc, and various minor updated.
+**May 17, 2019**: uploaded resources in Baidu Netdisk also, added [Run demo](https://github.com/clovaai/deep-text-recognition-benchmark#run-demo-with-pretrained-model). (check [@sharavsambuu's](https://github.com/sharavsambuu) [colab demo also](https://colab.research.google.com/drive/1PHnc_QYyf9b1_KJ1r15wYXaOXkdm1Mrk)) <br>
+**May 9, 2019**: PyTorch version updated from 1.0.1 to 1.1.0, use torch.nn.CTCLoss instead of torch-baidu-ctc, and various minor updated.
 
 ## Getting Started
 ### Dependency
