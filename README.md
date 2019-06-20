@@ -130,6 +130,10 @@ This implementation has been based on these repository [crnn.pytorch](https://gi
 [9] A. Risnumawan, P. Shivakumara, C. S. Chan, and C. L. Tan. A robust arbitrary text detection system for natural scene images. In ESWA, volume 41, pages 8027–8048, 2014. <br>
 [10] B. Shi, X. Bai, and C. Yao. An end-to-end trainable neural network for image-based sequence recognition and its application to scene text recognition. In TPAMI, volume 39, pages2298–2304. 2017. 
 
+## Links
+- WebDemo : https://demo.ocr.clova.ai/
+- Repo of detection : https://github.com/clovaai/CRAFT-pytorch
+
 ## Citation
 If you find this work useful for your research, please cite:
 
