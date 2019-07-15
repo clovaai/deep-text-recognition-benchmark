@@ -123,21 +123,25 @@ class LmdbDataset(Dataset):
             nSamples = int(txn.get('num-samples'.encode()))
             self.nSamples = nSamples
 
-            # Filtering
-            self.filtered_index_list = []
-            for index in range(self.nSamples):
-                index += 1  # lmdb starts with 1
-                label_key = 'label-%09d'.encode() % index
-                label = txn.get(label_key).decode('utf-8')
+            if self.opt.data_filtering:
+                # Filtering
+                self.filtered_index_list = []
+                for index in range(self.nSamples):
+                    index += 1  # lmdb starts with 1
+                    label_key = 'label-%09d'.encode() % index
+                    label = txn.get(label_key).decode('utf-8')
 
-                if len(label) > self.opt.batch_max_length:
-                    # print(f'The length of the label is longer than max_length: length
-                    # {len(label)}, {label} in dataset {self.root}')
-                    continue
+                    if len(label) > self.opt.batch_max_length:
+                        # print(f'The length of the label is longer than max_length: length
+                        # {len(label)}, {label} in dataset {self.root}')
+                        continue
 
-                self.filtered_index_list.append(index)
+                    self.filtered_index_list.append(index)
 
-            self.nSamples = len(self.filtered_index_list)
+                self.nSamples = len(self.filtered_index_list)
+            else:
+                # for fast check with no filtering
+                self.filtered_index_list = [index+1 for index in range(self.nSamples)]
 
     def __len__(self):
         return self.nSamples
