@@ -123,7 +123,10 @@ class LmdbDataset(Dataset):
             nSamples = int(txn.get('num-samples'.encode()))
             self.nSamples = nSamples
 
-            if self.opt.data_filtering:
+            if self.opt.data_filtering_off:
+                # for fast check with no filtering
+                self.filtered_index_list = [index + 1 for index in range(self.nSamples)]
+            else:
                 # Filtering
                 self.filtered_index_list = []
                 for index in range(self.nSamples):
@@ -139,9 +142,6 @@ class LmdbDataset(Dataset):
                     self.filtered_index_list.append(index)
 
                 self.nSamples = len(self.filtered_index_list)
-            else:
-                # for fast check with no filtering
-                self.filtered_index_list = [index+1 for index in range(self.nSamples)]
 
     def __len__(self):
         return self.nSamples
