@@ -139,7 +139,7 @@ class LmdbDataset(Dataset):
                         # {len(label)}, {label} in dataset {self.root}')
                         continue
 
-                    # By default, images containing characters which are not in opt.character are ignored.
+                    # By default, images containing characters which are not in opt.character are filtered.
                     # You can add [UNK] token to `opt.character` in utils.py instead of this filtering.
                     out_of_char = f'[^{self.opt.character}]'
                     if re.search(out_of_char, label.lower()):
