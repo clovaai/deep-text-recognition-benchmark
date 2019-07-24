@@ -19,6 +19,7 @@ from test import validation
 
 try:
     from apex import amp
+    from apex import fp16_utils
     APEX_AVAILABLE = True
     amp_handle = amp.init(enabled=True)
 except ModuleNotFoundError:
@@ -154,9 +155,10 @@ def train(opt):
         if APEX_AVAILABLE:
             with amp.scale_loss(cost, optimizer) as scaled_loss:
                 scaled_loss.backward()
+                fp16_utils.clip_grad_norm(model.parameters(), opt.grad_clip)  # gradient clipping with 5 (Default)
         else:
             cost.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)  # gradient clipping with 5 (Default)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)  # gradient clipping with 5 (Default)
         optimizer.step()
 
         loss_avg.add(cost)
