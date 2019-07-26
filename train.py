@@ -135,7 +135,7 @@ def train(opt):
             cost = criterion(preds, text, preds_size, length)
 
         else:
-            preds = model(image, text)
+            preds = model(image, text[:, :-1]) # align with Attention.forward
             target = text[:, 1:]  # without [GO] Symbol
             cost = criterion(preds.view(-1, preds.shape[-1]), target.contiguous().view(-1))
 
