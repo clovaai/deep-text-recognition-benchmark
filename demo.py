@@ -26,12 +26,14 @@ def demo(opt):
           opt.SequenceModeling, opt.Prediction)
 
     model = torch.nn.DataParallel(model)
-    if torch.cuda.is_available():
-        model = model.cuda()
 
     # load model
     print('loading pretrained model from %s' % opt.saved_model)
-    model.load_state_dict(torch.load(opt.saved_model))
+    if torch.cuda.is_available():
+        model = model.cuda()
+        model.load_state_dict(torch.load(opt.saved_model))
+    else:
+        model.load_state_dict(torch.load(opt.saved_model, map_location='cpu'))
 
     # prepare data. two demo images from https://github.com/bgshih/crnn#run-demo
     AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
@@ -47,10 +49,15 @@ def demo(opt):
     for image_tensors, image_path_list in demo_loader:
         batch_size = image_tensors.size(0)
         with torch.no_grad():
-            image = image_tensors.cuda()
+            if torch.cuda.is_available():
             # For max length prediction
-            length_for_pred = torch.cuda.IntTensor([opt.batch_max_length] * batch_size)
-            text_for_pred = torch.cuda.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
+                image = image_tensors.cuda()
+                length_for_pred = torch.cuda.IntTensor([opt.batch_max_length] * batch_size)
+                text_for_pred = torch.cuda.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
+            else:
+                image = image_tensors
+                length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size)
+                text_for_pred = torch.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
 
         if 'CTC' in opt.Prediction:
             preds = model(image, text_for_pred).log_softmax(2)
