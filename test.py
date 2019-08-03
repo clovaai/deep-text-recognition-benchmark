@@ -12,6 +12,7 @@ from nltk.metrics.distance import edit_distance
 from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate
 from model import Model
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=False):
@@ -76,10 +77,10 @@ def validation(model, criterion, evaluation_loader, converter, opt):
     for i, (image_tensors, labels) in enumerate(evaluation_loader):
         batch_size = image_tensors.size(0)
         length_of_data = length_of_data + batch_size
-        image = image_tensors.cuda()
+        image = image_tensors.to(device)
         # For max length prediction
-        length_for_pred = torch.cuda.IntTensor([opt.batch_max_length] * batch_size)
-        text_for_pred = torch.cuda.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
+        length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size).to(device)
+        text_for_pred = torch.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0).to(device)
 
         text_for_loss, length_for_loss = converter.encode(labels, batch_max_length=opt.batch_max_length)
 
@@ -146,7 +147,7 @@ def test(opt):
     print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
           opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
           opt.SequenceModeling, opt.Prediction)
-    model = torch.nn.DataParallel(model).cuda()
+    model = torch.nn.DataParallel(model).to(device)
 
     # load model
     print('loading pretrained model from %s' % opt.saved_model)
@@ -160,9 +161,9 @@ def test(opt):
 
     """ setup loss """
     if 'CTC' in opt.Prediction:
-        criterion = torch.nn.CTCLoss(zero_infinity=True).cuda()
+        criterion = torch.nn.CTCLoss(zero_infinity=True).to(device)
     else:
-        criterion = torch.nn.CrossEntropyLoss(ignore_index=0).cuda()  # ignore [GO] token = ignore index 0
+        criterion = torch.nn.CrossEntropyLoss(ignore_index=0).to(device)  # ignore [GO] token = ignore index 0
 
     """ evaluation """
     model.eval()

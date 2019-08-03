@@ -16,6 +16,7 @@ from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
 from model import Model
 from test import validation
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def train(opt):
@@ -63,7 +64,7 @@ def train(opt):
             continue
 
     # data parallel for multi-GPU
-    model = torch.nn.DataParallel(model).cuda()
+    model = torch.nn.DataParallel(model).to(device)
     model.train()
     if opt.continue_model != '':
         print(f'loading pretrained model from {opt.continue_model}')
@@ -73,9 +74,9 @@ def train(opt):
 
     """ setup loss """
     if 'CTC' in opt.Prediction:
-        criterion = torch.nn.CTCLoss(zero_infinity=True).cuda()
+        criterion = torch.nn.CTCLoss(zero_infinity=True).to(device)
     else:
-        criterion = torch.nn.CrossEntropyLoss(ignore_index=0).cuda()  # ignore [GO] token = ignore index 0
+        criterion = torch.nn.CrossEntropyLoss(ignore_index=0).to(device)  # ignore [GO] token = ignore index 0
     # loss averager
     loss_avg = Averager()
 
@@ -121,7 +122,7 @@ def train(opt):
     while(True):
         # train part
         image_tensors, labels = train_dataset.get_batch()
-        image = image_tensors.cuda()
+        image = image_tensors.to(device)
         text, length = converter.encode(labels, batch_max_length=opt.batch_max_length)
         batch_size = image.size(0)
 

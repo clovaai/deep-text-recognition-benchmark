@@ -8,6 +8,7 @@ import torch.utils.data
 from utils import CTCLabelConverter, AttnLabelConverter
 from dataset import RawDataset, AlignCollate
 from model import Model
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def demo(opt):
@@ -24,10 +25,7 @@ def demo(opt):
     print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
           opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
           opt.SequenceModeling, opt.Prediction)
-
-    model = torch.nn.DataParallel(model)
-    if torch.cuda.is_available():
-        model = model.cuda()
+    model = torch.nn.DataParallel(model).to(device)
 
     # load model
     print('loading pretrained model from %s' % opt.saved_model)
@@ -47,10 +45,10 @@ def demo(opt):
     with torch.no_grad():
         for image_tensors, image_path_list in demo_loader:
             batch_size = image_tensors.size(0)
-            image = image_tensors.cuda()
+            image = image_tensors.to(device)
             # For max length prediction
-            length_for_pred = torch.cuda.IntTensor([opt.batch_max_length] * batch_size)
-            text_for_pred = torch.cuda.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
+            length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size).to(device)
+            text_for_pred = torch.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0).to(device)
 
             if 'CTC' in opt.Prediction:
                 preds = model(image, text_for_pred).log_softmax(2)

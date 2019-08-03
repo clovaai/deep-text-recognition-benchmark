@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class TPS_SpatialTransformerNetwork(nn.Module):
@@ -149,7 +150,7 @@ class GridGenerator(nn.Module):
         batch_inv_delta_C = self.inv_delta_C.repeat(batch_size, 1, 1)
         batch_P_hat = self.P_hat.repeat(batch_size, 1, 1)
         batch_C_prime_with_zeros = torch.cat((batch_C_prime, torch.zeros(
-            batch_size, 3, 2).float().cuda()), dim=1)  # batch_size x F+3 x 2
+            batch_size, 3, 2).float().to(device)), dim=1)  # batch_size x F+3 x 2
         batch_T = torch.bmm(batch_inv_delta_C, batch_C_prime_with_zeros)  # batch_size x F+3 x 2
         batch_P_prime = torch.bmm(batch_P_hat, batch_T)  # batch_size x n x 2
         return batch_P_prime  # batch_size x n x 2
