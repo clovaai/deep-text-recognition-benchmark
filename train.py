@@ -120,9 +120,6 @@ def train(opt):
 
     while(True):
         # train part
-        for p in model.parameters():
-            p.requires_grad = True
-
         image_tensors, labels = train_dataset.get_batch()
         image = image_tensors.cuda()
         text, length = converter.encode(labels, batch_max_length=opt.batch_max_length)
@@ -156,8 +153,9 @@ def train(opt):
                 loss_avg.reset()
 
                 model.eval()
-                valid_loss, current_accuracy, current_norm_ED, preds, labels, infer_time, length_of_data = validation(
-                    model, criterion, valid_loader, converter, opt)
+                with torch.no_grad():
+                    valid_loss, current_accuracy, current_norm_ED, preds, labels, infer_time, length_of_data = validation(
+                        model, criterion, valid_loader, converter, opt)
                 model.train()
 
                 for pred, gt in zip(preds[:5], labels[:5]):

@@ -67,9 +67,6 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
 
 def validation(model, criterion, evaluation_loader, converter, opt):
     """ validation or evaluation """
-    for p in model.parameters():
-        p.requires_grad = False
-
     n_correct = 0
     norm_ED = 0
     length_of_data = 0
@@ -79,13 +76,12 @@ def validation(model, criterion, evaluation_loader, converter, opt):
     for i, (image_tensors, labels) in enumerate(evaluation_loader):
         batch_size = image_tensors.size(0)
         length_of_data = length_of_data + batch_size
-        with torch.no_grad():
-            image = image_tensors.cuda()
-            # For max length prediction
-            length_for_pred = torch.cuda.IntTensor([opt.batch_max_length] * batch_size)
-            text_for_pred = torch.cuda.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
+        image = image_tensors.cuda()
+        # For max length prediction
+        length_for_pred = torch.cuda.IntTensor([opt.batch_max_length] * batch_size)
+        text_for_pred = torch.cuda.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0)
 
-            text_for_loss, length_for_loss = converter.encode(labels, batch_max_length=opt.batch_max_length)
+        text_for_loss, length_for_loss = converter.encode(labels, batch_max_length=opt.batch_max_length)
 
         start_time = time.time()
         if 'CTC' in opt.Prediction:
@@ -170,22 +166,23 @@ def test(opt):
 
     """ evaluation """
     model.eval()
-    if opt.benchmark_all_eval:  # evaluation with 10 benchmark evaluation datasets
-        benchmark_all_eval(model, criterion, converter, opt)
-    else:
-        AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-        eval_data = hierarchical_dataset(root=opt.eval_data, opt=opt)
-        evaluation_loader = torch.utils.data.DataLoader(
-            eval_data, batch_size=opt.batch_size,
-            shuffle=False,
-            num_workers=int(opt.workers),
-            collate_fn=AlignCollate_evaluation, pin_memory=True)
-        _, accuracy_by_best_model, _, _, _, _, _ = validation(
-            model, criterion, evaluation_loader, converter, opt)
+    with torch.no_grad():
+        if opt.benchmark_all_eval:  # evaluation with 10 benchmark evaluation datasets
+            benchmark_all_eval(model, criterion, converter, opt)
+        else:
+            AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
+            eval_data = hierarchical_dataset(root=opt.eval_data, opt=opt)
+            evaluation_loader = torch.utils.data.DataLoader(
+                eval_data, batch_size=opt.batch_size,
+                shuffle=False,
+                num_workers=int(opt.workers),
+                collate_fn=AlignCollate_evaluation, pin_memory=True)
+            _, accuracy_by_best_model, _, _, _, _, _ = validation(
+                model, criterion, evaluation_loader, converter, opt)
 
-        print(accuracy_by_best_model)
-        with open('./result/{0}/log_evaluation.txt'.format(opt.experiment_name), 'a') as log:
-            log.write(str(accuracy_by_best_model) + '\n')
+            print(accuracy_by_best_model)
+            with open('./result/{0}/log_evaluation.txt'.format(opt.experiment_name), 'a') as log:
+                log.write(str(accuracy_by_best_model) + '\n')
 
 
 if __name__ == '__main__':
