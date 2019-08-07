@@ -92,7 +92,12 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             # Calculate evaluation loss for CTC deocder.
             preds_size = torch.IntTensor([preds.size(1)] * batch_size)
             preds = preds.permute(1, 0, 2)  # to use CTCloss format
+
+            # To avoid ctc_loss issue, disabled cudnn for the computation of the ctc_loss
+            # https://github.com/jpuigcerver/PyLaia/issues/16
+            torch.backends.cudnn.enabled = False
             cost = criterion(preds, text_for_loss, preds_size, length_for_loss)
+            torch.backends.cudnn.enabled = True
 
             # Select max probabilty (greedy decoding) then decode index to character
             _, preds_index = preds.max(2)
