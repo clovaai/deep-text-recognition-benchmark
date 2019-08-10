@@ -90,7 +90,7 @@ def hierarchical_dataset(root, opt, select_data='/'):
     """ select_data='/' contains all sub-directory of root directory """
     dataset_list = []
     print(f'dataset_root:    {root}\t dataset: {select_data[0]}')
-    for dirpath, dirnames, filenames in os.walk(root):
+    for dirpath, dirnames, filenames in os.walk(root+'/'):
         if not dirnames:
             select_flag = False
             for selected_d in select_data:
