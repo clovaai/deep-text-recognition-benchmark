@@ -139,8 +139,7 @@ This implementation has been based on these repository [crnn.pytorch](https://gi
 - Repo of detection : https://github.com/clovaai/CRAFT-pytorch
 
 ## Citation
-If you find this work useful for your research, please cite:
-
+Please consider citing this work in your publications if it helps your research.
 ```
 @inproceedings{baek2019STRcomparisons,
   title={What is wrong with scene text recognition model comparisons? dataset and model analysis},
