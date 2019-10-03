@@ -1,8 +1,8 @@
-# What is wrong with scene text recognition model comparisons? dataset and model analysis
+# What Is Wrong With Scene Text Recognition Model Comparisons? Dataset and Model Analysis
 | [paper](https://arxiv.org/abs/1904.01906) | [training and evaluation data](https://github.com/clovaai/deep-text-recognition-benchmark#download-lmdb-dataset-for-traininig-and-evaluation-from-here) | [failure cases and cleansed label](https://github.com/clovaai/deep-text-recognition-benchmark#download-failure-cases-and-cleansed-label-from-here) | [pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW) | [Baidu ver(passwd:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ) |
 
-Official PyTorch implementation of our four-stage STR framework, that most existing STR models fit into.
-Using this framework allows for the module-wise contributions to performance in terms of accuracy, speed, and memory demand, under one consistent set of training and evaluation datasets.
+Official PyTorch implementation of our four-stage STR framework, that most existing STR models fit into. <br>
+Using this framework allows for the module-wise contributions to performance in terms of accuracy, speed, and memory demand, under one consistent set of training and evaluation datasets. <br>
 Such analyses clean up the hindrance on the current comparisons to understand the performance gain of the existing modules. <br><br>
 <img src="./figures/trade-off.png" width="1000" title="trade-off">
 
@@ -94,6 +94,7 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py \
 * `--eval_data`: folder path to evaluation (with test.py) lmdb dataset.
 * `--select_data`: select training data. default is MJ-ST, which means MJ and ST used as training data.
 * `--batch_ratio`: assign ratio for each selected data in the batch. default is 0.5-0.5, which means 50% of the batch is filled with MJ and the other 50% of the batch is filled ST.
+* `--data_filtering_off`: skip [data filtering](https://github.com/clovaai/deep-text-recognition-benchmark/blob/f2c54ae2a4cc787a0f5859e9fdd0e399812c76a3/dataset.py#L126-L146) when creating LmdbDataset. 
 * `--Transformation`: select Transformation module [None | TPS].
 * `--FeatureExtraction`: select FeatureExtraction module [VGG | RCNN | ResNet].
 * `--SequenceModeling`: select SequenceModeling module [None | BiLSTM].
