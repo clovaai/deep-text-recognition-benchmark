@@ -4,7 +4,7 @@
 Official PyTorch implementation of our four-stage STR framework, that most existing STR models fit into.
 Using this framework allows for the module-wise contributions to performance in terms of accuracy, speed, and memory demand, under one consistent set of training and evaluation datasets.
 Such analyses clean up the hindrance on the current comparisons to understand the performance gain of the existing modules. <br><br>
-<img src="./figures/trade-off.jpg" width="1000" title="trade-off">
+<img src="./figures/trade-off.png" width="1000" title="trade-off">
 
 ## Honors
 Based on this framework, we recorded the 1st place of [ICDAR2013 focused scene text](https://rrc.cvc.uab.es/?ch=2&com=evaluation&task=3), [ICDAR2019 ArT](https://rrc.cvc.uab.es/files/ICDAR2019-ArT.pdf) and 3rd place of [ICDAR2017 COCO-Text](https://rrc.cvc.uab.es/?ch=5&com=evaluation&task=2), [ICDAR2019 ReCTS (task1)](https://rrc.cvc.uab.es/files/ICDAR2019-ReCTS.pdf). <br>
