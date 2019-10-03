@@ -143,7 +143,7 @@ This implementation has been based on these repository [crnn.pytorch](https://gi
 Please consider citing this work in your publications if it helps your research.
 ```
 @inproceedings{baek2019STRcomparisons,
-  title={What is wrong with scene text recognition model comparisons? dataset and model analysis},
+  title={What Is Wrong With Scene Text Recognition Model Comparisons? Dataset and Model Analysis},
   author={Baek, Jeonghun and Kim, Geewook and Lee, Junyeop and Park, Sungrae and Han, Dongyoon and Yun, Sangdoo and Oh, Seong Joon and Lee, Hwalsuk},
   booktitle = {International Conference on Computer Vision (ICCV)},
   year={2019},
