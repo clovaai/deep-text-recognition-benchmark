@@ -106,7 +106,8 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py \
 image_release.zip contains failure case images and benchmark evaluation images with cleansed label.
 <img src="./figures/failure-case.jpg" width="1000" title="failure cases">
 
-## When you need to create lmdb dataset
+## When you need to train on your own dataset or Non-Latin language datasets.
+1. Create your own lmdb dataset.
 ```
 pip3 install fire
 python3 create_lmdb_dataset.py --inputPath data/ --gtFile data/gt.txt --outputPath result/
@@ -119,6 +120,8 @@ test/word_2.png kills
 test/word_3.png A
 ...
 ```
+2. Modify `--select_data`, `--batch_ratio`, and `opt.character`, see [this issue](https://github.com/clovaai/deep-text-recognition-benchmark/issues/85).
+
 
 ## Acknowledgements
 This implementation has been based on these repository [crnn.pytorch](https://github.com/meijieru/crnn.pytorch), [ocr_attention](https://github.com/marvis/ocr_attention).
