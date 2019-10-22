@@ -4,6 +4,7 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 import torch.utils.data
+import torch.nn.functional as F
 
 from utils import CTCLabelConverter, AttnLabelConverter
 from dataset import RawDataset, AlignCollate
@@ -67,13 +68,20 @@ def demo(opt):
                 preds_str = converter.decode(preds_index, length_for_pred)
 
             print('-' * 80)
-            print('image_path\tpredicted_labels')
+            print('image_path\tpredicted_labels\tconfidence score')
             print('-' * 80)
-            for img_name, pred in zip(image_path_list, preds_str):
+            preds_prob = F.softmax(preds, dim=2)
+            preds_max_prob, _ = preds_prob.max(dim=2)
+            for img_name, pred, pred_max_prob in zip(image_path_list, preds_str, preds_max_prob):
                 if 'Attn' in opt.Prediction:
-                    pred = pred[:pred.find('[s]')]  # prune after "end of sentence" token ([s])
+                    pred_EOS = pred.find('[s]')
+                    pred = pred[:pred_EOS]  # prune after "end of sentence" token ([s])
+                    pred_max_prob = pred_max_prob[:pred_EOS]
 
-                print(f'{img_name}\t{pred}')
+                # calculate confidence score (= multiply of pred_max_prob)
+                confidence_score = pred_max_prob.cumprod(dim=0)[-1]
+
+                print(f'{img_name}\t{pred}\t{confidence_score}')
 
 
 if __name__ == '__main__':

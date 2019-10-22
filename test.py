@@ -6,6 +6,7 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 import torch.utils.data
+import torch.nn.functional as F
 import numpy as np
 from nltk.metrics.distance import edit_distance
 
@@ -115,10 +116,15 @@ def validation(model, criterion, evaluation_loader, converter, opt):
         infer_time += forward_time
         valid_loss_avg.add(cost)
 
-        # calculate accuracy.
-        for pred, gt in zip(preds_str, labels):
+        # calculate accuracy & confidence score
+        preds_prob = F.softmax(preds, dim=2)
+        preds_max_prob, _ = preds_prob.max(dim=2)
+        confidence_score_list = []
+        for pred, pred_max_prob, gt in zip(preds_str, preds_max_prob, labels):
             if 'Attn' in opt.Prediction:
-                pred = pred[:pred.find('[s]')]  # prune after "end of sentence" token ([s])
+                pred_EOS = pred.find('[s]')
+                pred = pred[:pred_EOS]  # prune after "end of sentence" token ([s])
+                pred_max_prob = pred_max_prob[:pred_EOS]
                 gt = gt[:gt.find('[s]')]
 
             if pred == gt:
@@ -127,6 +133,11 @@ def validation(model, criterion, evaluation_loader, converter, opt):
                 norm_ED += 1
             else:
                 norm_ED += edit_distance(pred, gt) / len(gt)
+
+            # calculate confidence score (= multiply of pred_max_prob)
+            confidence_score = pred_max_prob.cumprod(dim=0)[-1]
+            confidence_score_list.append(confidence_score)
+            # print(pred, gt, pred==gt, confidence_score)
 
     accuracy = n_correct / float(length_of_data) * 100
 
