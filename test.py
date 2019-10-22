@@ -97,7 +97,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
             # Select max probabilty (greedy decoding) then decode index to character
             _, preds_index = preds.max(2)
-            preds_index = preds_index.transpose(1, 0).contiguous().view(-1)
+            preds_index = preds_index.view(-1)
             preds_str = converter.decode(preds_index.data, preds_size.data)
 
         else:

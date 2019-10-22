@@ -56,8 +56,8 @@ def demo(opt):
 
                 # Select max probabilty (greedy decoding) then decode index to character
                 preds_size = torch.IntTensor([preds.size(1)] * batch_size)
-                _, preds_index = preds.permute(1, 0, 2).max(2)
-                preds_index = preds_index.transpose(1, 0).contiguous().view(-1)
+                _, preds_index = preds.max(2)
+                preds_index = preds_index.view(-1)
                 preds_str = converter.decode(preds_index.data, preds_size.data)
 
             else:
