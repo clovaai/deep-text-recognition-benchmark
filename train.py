@@ -147,7 +147,7 @@ def train(opt):
             # cost = criterion(preds, text, preds_size, length)
 
         else:
-            preds = model(image, text[:, :-1]) # align with Attention.forward
+            preds = model(image, text[:, :-1])  # align with Attention.forward
             target = text[:, 1:]  # without [GO] Symbol
             cost = criterion(preds.view(-1, preds.shape[-1]), target.contiguous().view(-1))
 
@@ -161,40 +161,48 @@ def train(opt):
         # validation part
         if i % opt.valInterval == 0:
             elapsed_time = time.time() - start_time
-            print(f'[{i}/{opt.num_iter}] Loss: {loss_avg.val():0.5f} elapsed_time: {elapsed_time:0.5f}')
             # for log
             with open(f'./saved_models/{opt.experiment_name}/log_train.txt', 'a') as log:
-                log.write(f'[{i}/{opt.num_iter}] Loss: {loss_avg.val():0.5f} elapsed_time: {elapsed_time:0.5f}\n')
-                loss_avg.reset()
-
                 model.eval()
                 with torch.no_grad():
-                    valid_loss, current_accuracy, current_norm_ED, preds, labels, infer_time, length_of_data = validation(
+                    valid_loss, current_accuracy, current_norm_ED, preds, confidence_score, labels, infer_time, length_of_data = validation(
                         model, criterion, valid_loader, converter, opt)
                 model.train()
 
-                for pred, gt in zip(preds[:5], labels[:5]):
-                    if 'Attn' in opt.Prediction:
-                        pred = pred[:pred.find('[s]')]
-                        gt = gt[:gt.find('[s]')]
-                    print(f'{pred:20s}, gt: {gt:20s},   {str(pred == gt)}')
-                    log.write(f'{pred:20s}, gt: {gt:20s},   {str(pred == gt)}\n')
+                # training loss and validation loss
+                loss_log = f'[{i}/{opt.num_iter}] Train loss: {loss_avg.val():0.5f}, Valid loss: {valid_loss:0.5f}, Elapsed_time: {elapsed_time:0.5f}'
+                print(loss_log)
+                log.write(loss_log + '\n')
+                loss_avg.reset()
 
-                valid_log = f'[{i}/{opt.num_iter}] valid loss: {valid_loss:0.5f}'
-                valid_log += f' accuracy: {current_accuracy:0.3f}, norm_ED: {current_norm_ED:0.2f}'
-                print(valid_log)
-                log.write(valid_log + '\n')
+                current_model_log = f'{"Current_accuracy":17s}: {current_accuracy:0.3f}, {"Current_norm_ED":17s}: {current_norm_ED:0.2f}'
+                print(current_model_log)
+                log.write(current_model_log + '\n')
 
-                # keep best accuracy model
+                # keep best accuracy model (on valid dataset)
                 if current_accuracy > best_accuracy:
                     best_accuracy = current_accuracy
                     torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_accuracy.pth')
                 if current_norm_ED < best_norm_ED:
                     best_norm_ED = current_norm_ED
                     torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_norm_ED.pth')
-                best_model_log = f'best_accuracy: {best_accuracy:0.3f}, best_norm_ED: {best_norm_ED:0.2f}'
+                best_model_log = f'{"Best_accuracy":17s}: {best_accuracy:0.3f}, {"Best_norm_ED":17s}: {best_norm_ED:0.2f}'
                 print(best_model_log)
                 log.write(best_model_log + '\n')
+
+                # show some predicted results
+                print('-' * 80)
+                print(f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F')
+                log.write(f'{"Ground Truth":25s} | {"Prediction":25s} | {"Confidence Score"}\n')
+                print('-' * 80)
+                for gt, pred, confidence in zip(labels[:5], preds[:5], confidence_score[:5]):
+                    if 'Attn' in opt.Prediction:
+                        gt = gt[:gt.find('[s]')]
+                        pred = pred[:pred.find('[s]')]
+
+                    print(f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}')
+                    log.write(f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}\n')
+                print('-' * 80)
 
         # save model per 1e+5 iter.
         if (i + 1) % 1e+5 == 0:
