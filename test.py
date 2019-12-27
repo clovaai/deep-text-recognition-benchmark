@@ -31,11 +31,14 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
     total_forward_time = 0
     total_evaluation_data_number = 0
     total_correct_number = 0
-    print('-' * 80)
+    log = open(f'./result/{opt.experiment_name}/log_all_evaluation.txt', 'a')
+    dashed_line = '-' * 80
+    print(dashed_line)
+    log.write(dashed_line + '\n')
     for eval_data in eval_data_list:
         eval_data_path = os.path.join(opt.eval_data, eval_data)
         AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-        eval_data = hierarchical_dataset(root=eval_data_path, opt=opt)
+        eval_data, eval_data_log = hierarchical_dataset(root=eval_data_path, opt=opt)
         evaluation_loader = torch.utils.data.DataLoader(
             eval_data, batch_size=evaluation_batch_size,
             shuffle=False,
@@ -48,8 +51,11 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
         total_forward_time += infer_time
         total_evaluation_data_number += len(eval_data)
         total_correct_number += accuracy_by_best_model * length_of_data
-        print('Acc %0.3f\t normalized_ED %0.3f' % (accuracy_by_best_model, norm_ED_by_best_model))
-        print('-' * 80)
+        log.write(eval_data_log)
+        print(f'Acc {accuracy_by_best_model:0.3f}\t normalized_ED {norm_ED_by_best_model:0.3f}')
+        log.write(f'Acc {accuracy_by_best_model:0.3f}\t normalized_ED {norm_ED_by_best_model:0.3f}\n')
+        print(dashed_line)
+        log.write(dashed_line + '\n')
 
     averaged_forward_time = total_forward_time / total_evaluation_data_number * 1000
     total_accuracy = total_correct_number / total_evaluation_data_number
@@ -61,8 +67,8 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
     evaluation_log += f'total_accuracy: {total_accuracy:0.3f}\t'
     evaluation_log += f'averaged_infer_time: {averaged_forward_time:0.3f}\t# parameters: {params_num/1e6:0.3f}'
     print(evaluation_log)
-    with open(f'./result/{opt.experiment_name}/log_all_evaluation.txt', 'a') as log:
-        log.write(evaluation_log + '\n')
+    log.write(evaluation_log + '\n')
+    log.close()
 
     return None
 
@@ -87,13 +93,13 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
         start_time = time.time()
         if 'CTC' in opt.Prediction:
-            preds = model(image, text_for_pred).log_softmax(2)
+            preds = model(image, text_for_pred)
             forward_time = time.time() - start_time
 
             # Calculate evaluation loss for CTC deocder.
             preds_size = torch.IntTensor([preds.size(1)] * batch_size)
             # permute 'preds' to use CTCloss format
-            cost = criterion(preds.permute(1, 0, 2), text_for_loss, preds_size, length_for_loss)
+            cost = criterion(preds.log_softmax(2).permute(1, 0, 2), text_for_loss, preds_size, length_for_loss)
 
             # Select max probabilty (greedy decoding) then decode index to character
             _, preds_index = preds.max(2)
@@ -129,10 +135,23 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
             if pred == gt:
                 n_correct += 1
+
+            '''
+            (old version) ICDAR2017 DOST Normalized Edit Distance https://rrc.cvc.uab.es/?ch=7&com=tasks
+            "For each word we calculate the normalized edit distance to the length of the ground truth transcription." 
             if len(gt) == 0:
                 norm_ED += 1
             else:
                 norm_ED += edit_distance(pred, gt) / len(gt)
+            '''
+            
+            # ICDAR2019 Normalized Edit Distance 
+            if len(gt) == 0 or len(pred) ==0:
+                norm_ED += 0
+            elif len(gt) > len(pred):
+                norm_ED += 1 - edit_distance(pred, gt) / len(gt)
+            else:
+                norm_ED += 1 - edit_distance(pred, gt) / len(pred)
 
             # calculate confidence score (= multiply of pred_max_prob)
             try:
@@ -143,6 +162,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             # print(pred, gt, pred==gt, confidence_score)
 
     accuracy = n_correct / float(length_of_data) * 100
+    norm_ED = norm_ED / float(length_of_data) # ICDAR2019 Normalized Edit Distance
 
     return valid_loss_avg.val(), accuracy, norm_ED, preds_str, confidence_score_list, labels, infer_time, length_of_data
 
@@ -185,8 +205,9 @@ def test(opt):
         if opt.benchmark_all_eval:  # evaluation with 10 benchmark evaluation datasets
             benchmark_all_eval(model, criterion, converter, opt)
         else:
+            log = open(f'./result/{opt.experiment_name}/log_evaluation.txt', 'a')
             AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-            eval_data = hierarchical_dataset(root=opt.eval_data, opt=opt)
+            eval_data, eval_data_log = hierarchical_dataset(root=opt.eval_data, opt=opt)
             evaluation_loader = torch.utils.data.DataLoader(
                 eval_data, batch_size=opt.batch_size,
                 shuffle=False,
@@ -194,10 +215,10 @@ def test(opt):
                 collate_fn=AlignCollate_evaluation, pin_memory=True)
             _, accuracy_by_best_model, _, _, _, _, _, _ = validation(
                 model, criterion, evaluation_loader, converter, opt)
-
-            print(accuracy_by_best_model)
-            with open('./result/{0}/log_evaluation.txt'.format(opt.experiment_name), 'a') as log:
-                log.write(str(accuracy_by_best_model) + '\n')
+            log.write(eval_data_log)
+            print(f'{accuracy_by_best_model:0.3f}')
+            log.write(f'{accuracy_by_best_model:0.3f}\n')
+            log.close()
 
 
 if __name__ == '__main__':

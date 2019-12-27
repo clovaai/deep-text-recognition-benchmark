@@ -24,21 +24,25 @@ def train(opt):
     if not opt.data_filtering_off:
         print('Filtering the images containing characters which are not in opt.character')
         print('Filtering the images whose label is longer than opt.batch_max_length')
-        # see https://github.com/clovaai/deep-text-recognition-benchmark/blob/master/dataset.py#L130
+        # see https://github.com/clovaai/deep-text-recognition-benchmark/blob/6593928855fb7abb999a99f428b3e4477d4ae356/dataset.py#L130
 
     opt.select_data = opt.select_data.split('-')
     opt.batch_ratio = opt.batch_ratio.split('-')
     train_dataset = Batch_Balanced_Dataset(opt)
 
+    log = open(f'./saved_models/{opt.experiment_name}/log_dataset.txt', 'a')
     AlignCollate_valid = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-    valid_dataset = hierarchical_dataset(root=opt.valid_data, opt=opt)
+    valid_dataset, valid_dataset_log = hierarchical_dataset(root=opt.valid_data, opt=opt)
     valid_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=opt.batch_size,
         shuffle=True,  # 'True' to check training progress with validation function.
         num_workers=int(opt.workers),
         collate_fn=AlignCollate_valid, pin_memory=True)
+    log.write(valid_dataset_log)
     print('-' * 80)
-
+    log.write('-' * 80 + '\n')
+    log.close()
+    
     """ model configuration """
     if 'CTC' in opt.Prediction:
         converter = CTCLabelConverter(opt.character)
@@ -176,13 +180,9 @@ def train(opt):
 
                 # training loss and validation loss
                 loss_log = f'[{i}/{opt.num_iter}] Train loss: {loss_avg.val():0.5f}, Valid loss: {valid_loss:0.5f}, Elapsed_time: {elapsed_time:0.5f}'
-                print(loss_log)
-                log.write(loss_log + '\n')
                 loss_avg.reset()
 
                 current_model_log = f'{"Current_accuracy":17s}: {current_accuracy:0.3f}, {"Current_norm_ED":17s}: {current_norm_ED:0.2f}'
-                print(current_model_log)
-                log.write(current_model_log + '\n')
 
                 # keep best accuracy model (on valid dataset)
                 if current_accuracy > best_accuracy:
@@ -192,22 +192,24 @@ def train(opt):
                     best_norm_ED = current_norm_ED
                     torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_norm_ED.pth')
                 best_model_log = f'{"Best_accuracy":17s}: {best_accuracy:0.3f}, {"Best_norm_ED":17s}: {best_norm_ED:0.2f}'
-                print(best_model_log)
-                log.write(best_model_log + '\n')
+
+                loss_model_log = f'{loss_log}\n{current_model_log}\n{best_model_log}'
+                print(loss_model_log)
+                log.write(loss_model_log + '\n')
 
                 # show some predicted results
-                print('-' * 80)
-                print(f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F')
-                log.write(f'{"Ground Truth":25s} | {"Prediction":25s} | {"Confidence Score"}\n')
-                print('-' * 80)
+                dashed_line = '-' * 80
+                head = f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F'
+                predicted_result_log = f'{dashed_line}\n{head}\n{dashed_line}\n'
                 for gt, pred, confidence in zip(labels[:5], preds[:5], confidence_score[:5]):
                     if 'Attn' in opt.Prediction:
                         gt = gt[:gt.find('[s]')]
                         pred = pred[:pred.find('[s]')]
 
-                    print(f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}')
-                    log.write(f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}\n')
-                print('-' * 80)
+                    predicted_result_log += f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}\n'
+                predicted_result_log += f'{dashed_line}'
+                print(predicted_result_log)
+                log.write(predicted_result_log + '\n')
 
         # save model per 1e+5 iter.
         if (i + 1) % 1e+5 == 0:
@@ -249,17 +251,20 @@ if __name__ == '__main__':
     parser.add_argument('--imgH', type=int, default=32, help='the height of the input image')
     parser.add_argument('--imgW', type=int, default=100, help='the width of the input image')
     parser.add_argument('--rgb', action='store_true', help='use rgb input')
-    parser.add_argument('--character', type=str, default='0123456789abcdefghijklmnopqrstuvwxyz', help='character label')
+    parser.add_argument('--character', type=str,
+                        default='0123456789abcdefghijklmnopqrstuvwxyz', help='character label')
     parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')
     parser.add_argument('--PAD', action='store_true', help='whether to keep ratio then pad for image resize')
     parser.add_argument('--data_filtering_off', action='store_true', help='for data_filtering_off mode')
     """ Model Architecture """
     parser.add_argument('--Transformation', type=str, required=True, help='Transformation stage. None|TPS')
-    parser.add_argument('--FeatureExtraction', type=str, required=True, help='FeatureExtraction stage. VGG|RCNN|ResNet')
+    parser.add_argument('--FeatureExtraction', type=str, required=True,
+                        help='FeatureExtraction stage. VGG|RCNN|ResNet')
     parser.add_argument('--SequenceModeling', type=str, required=True, help='SequenceModeling stage. None|BiLSTM')
     parser.add_argument('--Prediction', type=str, required=True, help='Prediction stage. CTC|Attn')
     parser.add_argument('--num_fiducial', type=int, default=20, help='number of fiducial points of TPS-STN')
-    parser.add_argument('--input_channel', type=int, default=1, help='the number of input channel of Feature extractor')
+    parser.add_argument('--input_channel', type=int, default=1,
+                        help='the number of input channel of Feature extractor')
     parser.add_argument('--output_channel', type=int, default=512,
                         help='the number of output channel of Feature extractor')
     parser.add_argument('--hidden_size', type=int, default=256, help='the size of the LSTM hidden state')

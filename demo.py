@@ -52,7 +52,7 @@ def demo(opt):
             text_for_pred = torch.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0).to(device)
 
             if 'CTC' in opt.Prediction:
-                preds = model(image, text_for_pred).log_softmax(2)
+                preds = model(image, text_for_pred)
 
                 # Select max probabilty (greedy decoding) then decode index to character
                 preds_size = torch.IntTensor([preds.size(1)] * batch_size)
@@ -67,9 +67,14 @@ def demo(opt):
                 _, preds_index = preds.max(2)
                 preds_str = converter.decode(preds_index, length_for_pred)
 
-            print('-' * 80)
-            print(f'{"image_path":25s}\t{"predicted_labels":25s}\tconfidence score')
-            print('-' * 80)
+
+            log = open(f'./log_demo_result.txt', 'a')
+            dashed_line = '-' * 80
+            head = f'{"image_path":25s}\t{"predicted_labels":25s}\tconfidence score'
+            
+            print(f'{dashed_line}\n{head}\n{dashed_line}')
+            log.write(f'{dashed_line}\n{head}\n{dashed_line}\n')
+
             preds_prob = F.softmax(preds, dim=2)
             preds_max_prob, _ = preds_prob.max(dim=2)
             for img_name, pred, pred_max_prob in zip(image_path_list, preds_str, preds_max_prob):
@@ -81,9 +86,10 @@ def demo(opt):
                 # calculate confidence score (= multiply of pred_max_prob)
                 confidence_score = pred_max_prob.cumprod(dim=0)[-1]
 
-                # print(f'{img_name}\t{pred}\t{confidence_score:0.4f}')
                 print(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}')
+                log.write(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}\n')
 
+            log.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
