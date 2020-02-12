@@ -141,7 +141,8 @@ This implementation has been based on these repository [crnn.pytorch](https://gi
 [10] B. Shi, X. Bai, and C. Yao. An end-to-end trainable neural network for image-based sequence recognition and its application to scene text recognition. In TPAMI, volume 39, pages2298–2304. 2017. 
 
 ## Links
-- WebDemo (combination of Clova AI detection and recognition) : https://demo.ocr.clova.ai/
+- WebDemo : https://demo.ocr.clova.ai/ <br>
+Combination of Clova AI detection and recognition, additional/advanced features used for KOR/JPN.
 - Repo of detection : https://github.com/clovaai/CRAFT-pytorch
 
 ## Citation
@@ -159,7 +160,8 @@ Please consider citing this work in your publications if it helps your research.
 ```
 
 ## Contact
-Feel free to contact me if there is any question (Jeonghun Baek jh.baek@navercorp.com).
+Feel free to contact us if there is any question: <br>
+for code/paper Jeonghun Baek ku21fang@gmail.com; for collaboration hwalsuk.lee@navercorp.com (our team leader).
 
 ## License
 Copyright (c) 2019-present NAVER Corp.
