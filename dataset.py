@@ -149,6 +149,10 @@ class LmdbDataset(Dataset):
                 If you want to evaluate IC15-2077 & CUTE datasets which have special character labels,
                 use --data_filtering_off and only evaluate on alphabets and digits.
                 see https://github.com/clovaai/deep-text-recognition-benchmark/blob/6593928855fb7abb999a99f428b3e4477d4ae356/dataset.py#L190-L192
+
+                And if you want to evaluate them with the model trained with --sensitive option,
+                use --sensitive and --data_filtering_off,
+                see https://github.com/clovaai/deep-text-recognition-benchmark/blob/e2197e83b06ef555e2eedf9fca0f84a796cd23b7/test.py#L137-L143
                 """
                 self.filtered_index_list = []
                 for index in range(self.nSamples):
