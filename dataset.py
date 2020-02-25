@@ -152,7 +152,7 @@ class LmdbDataset(Dataset):
 
                 And if you want to evaluate them with the model trained with --sensitive option,
                 use --sensitive and --data_filtering_off,
-                see https://github.com/clovaai/deep-text-recognition-benchmark/blob/e2197e83b06ef555e2eedf9fca0f84a796cd23b7/test.py#L137-L143
+                see https://github.com/clovaai/deep-text-recognition-benchmark/blob/dff844874dbe9e0ec8c5a52a7bd08c7f20afe704/test.py#L137-L144
                 """
                 self.filtered_index_list = []
                 for index in range(self.nSamples):
