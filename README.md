@@ -22,7 +22,7 @@ The difference between our paper and ICDAR challenge is summarized [here](https:
 
 ## Getting Started
 ### Dependency
-- This work was tested with PyTorch 1.1.0, CUDA 9.0, python 3.6 and Ubuntu 16.04. <br> You may need `pip3 install torch==1.1.0`
+- This work was tested with PyTorch 1.3.1, CUDA 9.0, python 3.6 and Ubuntu 16.04. <br> You may need `pip3 install torch==1.3.1`. In the paper, expriments were performed with **PyTorch 0.4.1**.
 - requirements : lmdb, pillow, torchvision, nltk, natsort
 ```
 pip3 install lmdb pillow torchvision nltk natsort
@@ -69,13 +69,14 @@ CUDA_VISIBLE_DEVICES=0 python3 train.py \
 --select_data MJ-ST --batch_ratio 0.5-0.5 \
 --Transformation None --FeatureExtraction VGG --SequenceModeling BiLSTM --Prediction CTC
 ```
-2. Test CRNN[10] model
+2. Test CRNN[10] model. If you want to evaluate IC15-2077, check [data filtering part](https://github.com/clovaai/deep-text-recognition-benchmark/blob/c27abe6b4c681e2ee0784ad966602c056a0dd3b5/dataset.py#L148). 
 ```
 CUDA_VISIBLE_DEVICES=0 python3 test.py \
 --eval_data data_lmdb_release/evaluation --benchmark_all_eval \
 --Transformation None --FeatureExtraction VGG --SequenceModeling BiLSTM --Prediction CTC \
 --saved_model saved_models/None-VGG-BiLSTM-CTC-Seed1111/best_accuracy.pth
 ```
+
 3. Try to train and test our best accuracy combination (TPS-ResNet-BiLSTM-Attn) also. ([download pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW))
 ```
 CUDA_VISIBLE_DEVICES=0 python3 train.py \
