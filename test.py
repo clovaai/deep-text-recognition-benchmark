@@ -141,6 +141,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
                 alphanumeric_case_insensitve = '0123456789abcdefghijklmnopqrstuvwxyz'
                 out_of_alphanumeric_case_insensitve = f'[^{alphanumeric_case_insensitve}]'
                 pred = re.sub(out_of_alphanumeric_case_insensitve, '', pred)
+                gt = re.sub(out_of_alphanumeric_case_insensitve, '', gt)
 
             if pred == gt:
                 n_correct += 1
