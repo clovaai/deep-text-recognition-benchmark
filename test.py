@@ -134,7 +134,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
                 pred = pred[:pred_EOS]  # prune after "end of sentence" token ([s])
                 pred_max_prob = pred_max_prob[:pred_EOS]
 
-            # To evaluate the model with 'alphanumeric and case insensitve setting'
+            # To evaluate 'case sensitive model' with alphanumeric and case insensitve setting.
             if opt.sensitive and opt.data_filtering_off:
                 pred = pred.lower()
                 gt = gt.lower()
