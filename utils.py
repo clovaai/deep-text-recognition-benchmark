@@ -11,33 +11,36 @@ class CTCLabelConverter(object):
 
         self.dict = {}
         for i, char in enumerate(dict_character):
-            # NOTE: 0 is reserved for 'blank' token required by CTCLoss
+            # NOTE: 0 is reserved for 'CTCblank' token required by CTCLoss
             self.dict[char] = i + 1
 
-        self.character = ['[blank]'] + dict_character  # dummy '[blank]' token for CTCLoss (index 0)
+        self.character = ['[CTCblank]'] + dict_character  # dummy '[CTCblank]' token for CTCLoss (index 0)
 
     def encode(self, text, batch_max_length=25):
         """convert text-label into text-index.
         input:
             text: text labels of each image. [batch_size]
+            batch_max_length: max length of text label in the batch. 25 by default
 
         output:
-            text: concatenated text index for CTCLoss.
-                    [sum(text_lengths)] = [text_index_0 + text_index_1 + ... + text_index_(n - 1)]
+            text: text index for CTCLoss. [batch_size, batch_max_length]
             length: length of each text. [batch_size]
         """
         length = [len(s) for s in text]
-        text = ''.join(text)
-        text = [self.dict[char] for char in text]
 
-        return (torch.IntTensor(text), torch.IntTensor(length))
+        # The index used for padding (=0) would not affect the CTC loss calculation.
+        batch_text = torch.LongTensor(len(text), batch_max_length).fill_(0)
+        for i, t in enumerate(text):
+            text = list(t)
+            text = [self.dict[char] for char in text]
+            batch_text[i][:len(text)] = torch.LongTensor(text)
+        return (batch_text.to(device), torch.IntTensor(length).to(device))
 
     def decode(self, text_index, length):
         """ convert text-index into text-label. """
         texts = []
-        index = 0
-        for l in length:
-            t = text_index[index:index + l]
+        for index, l in enumerate(length):
+            t = text_index[index, :]
 
             char_list = []
             for i in range(l):
@@ -46,7 +49,6 @@ class CTCLabelConverter(object):
             text = ''.join(char_list)
 
             texts.append(text)
-            index += l
         return texts
 
 
