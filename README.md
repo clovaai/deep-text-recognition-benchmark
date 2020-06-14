@@ -126,7 +126,7 @@ data
     ├── word_3.png
     └── ...
 ```
-At this time, `gt.txt` should be `{imagepath}\t{label}\n` <br>
+At this time, `gt.txt` should be `{imagepath} {label}\n` <br>
 For example
 ```
 test/word_1.png Tiredness
