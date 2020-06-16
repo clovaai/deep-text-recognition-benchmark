@@ -165,7 +165,6 @@ Please consider citing this work in your publications if it helps your research.
   author={Baek, Jeonghun and Kim, Geewook and Lee, Junyeop and Park, Sungrae and Han, Dongyoon and Yun, Sangdoo and Oh, Seong Joon and Lee, Hwalsuk},
   booktitle = {International Conference on Computer Vision (ICCV)},
   year={2019},
-  note={to appear},
   pubstate={published},
   tppubtype={inproceedings}
 }
