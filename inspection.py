@@ -36,6 +36,7 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
     dashed_line = '-' * 80
     print(dashed_line)
     log.write(dashed_line + '\n')
+    
     for eval_data in eval_data_list:
         eval_data_path = os.path.join(opt.eval_data, eval_data)
         AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
@@ -81,7 +82,14 @@ def validation(model, criterion, evaluation_loader, converter, opt):
     length_of_data = 0
     infer_time = 0
     valid_loss_avg = Averager()
-
+    
+    faillog = open(f'./result/{opt.exp_name}/log_failure.txt', 'a')
+    dashed_line = '-' * 80
+    head = f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F'
+    predicted_result_log = f'{dashed_line}\n{head}\n{dashed_line}\n'
+    faillog.write(predicted_result_log + '\n')
+    predicted_result_log = ''
+    
     for i, (image_tensors, labels) in enumerate(evaluation_loader):
         batch_size = image_tensors.size(0)
         length_of_data = length_of_data + batch_size
@@ -141,10 +149,8 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             #     out_of_alphanumeric_case_insensitve = f'[^{alphanumeric_case_insensitve}]'
             #     pred = re.sub(out_of_alphanumeric_case_insensitve, '', pred)
             #     gt = re.sub(out_of_alphanumeric_case_insensitve, '', gt)
-
             if pred == gt:
                 n_correct += 1
-
             '''
             (old version) ICDAR2017 DOST Normalized Edit Distance https://rrc.cvc.uab.es/?ch=7&com=tasks
             "For each word we calculate the normalized edit distance to the length of the ground truth transcription."
@@ -168,7 +174,12 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             except:
                 confidence_score = 0  # for empty pred case, when prune after "end of sentence" token ([s])
             confidence_score_list.append(confidence_score)
+            
+            if(gt!=pred):
+                predicted_result_log += f'{gt:25s} | {pred:25s} | {confidence_score:0.4f}\t{str(pred == gt)}\n'
             # print(pred, gt, pred==gt, confidence_score)
+    faillog.write(predicted_result_log)
+    faillog.close()
     accuracy = n_correct / float(length_of_data) * 100
     norm_ED = norm_ED / float(length_of_data)  # ICDAR2019 Normalized Edit Distance
 
@@ -269,16 +280,7 @@ if __name__ == '__main__':
         opt.character = ''.join(charlist) + string.printable[:-38]
 
     if opt.stat_dict:
-        # opt.character = '0123456789/'
-        charlist = []
-        with open('ko_char.txt', "r", encoding = "utf-8-sig") as f:
-            for c in f.readlines():
-                charlist.append(c[:-1])
-        number = '0123456789'
-        symbol  = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ '
-        en_char = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        opt.character = number + symbol + en_char + ''.join(charlist)
-
+        opt.character = '0123456789'
 
     cudnn.benchmark = True
     cudnn.deterministic = True

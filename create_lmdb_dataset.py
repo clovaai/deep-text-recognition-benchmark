@@ -5,6 +5,7 @@ import os
 import lmdb
 import cv2
 
+from tqdm import tqdm
 import numpy as np
 
 
@@ -25,7 +26,7 @@ def writeCache(env, cache):
             txn.put(k, v)
 
 
-def createDataset(inputPath, gtFile, outputPath, checkValid=True):
+def createDataset(inputPath, gtFile, outputPath, checkValid=False):
     """
     Create LMDB dataset for training and evaluation.
     ARGS:
@@ -43,7 +44,7 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
         datalist = data.readlines()
 
     nSamples = len(datalist)
-    for i in range(nSamples):
+    for i in tqdm(range(nSamples)):
         imagePath, label = datalist[i].strip('\n').split('\t')
         imagePath = os.path.join(inputPath, imagePath)
 

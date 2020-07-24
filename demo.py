@@ -57,7 +57,7 @@ def demo(opt):
                 # Select max probabilty (greedy decoding) then decode index to character
                 preds_size = torch.IntTensor([preds.size(1)] * batch_size)
                 _, preds_index = preds.max(2)
-                # preds_index = preds_index.view(-1)
+                # preds_index = preds_index.view(-1) #DELETE
                 preds_str = converter.decode(preds_index, preds_size)
 
             else:
@@ -120,7 +120,12 @@ if __name__ == '__main__':
 
     """ vocab / character number configuration """
     if opt.sensitive:
-        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        # opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        charlist = []
+        with open('ko_char.txt', 'r', encoding='utf-8') as f:
+            for c in f.readlines():
+                charlist.append(c[:-1])
+        opt.character = ''.join(charlist) + string.printable[:-38]
 
     cudnn.benchmark = True
     cudnn.deterministic = True

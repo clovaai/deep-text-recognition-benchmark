@@ -13,7 +13,7 @@ from nltk.metrics.distance import edit_distance
 
 from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate
-from model import Model
+from easyocr_model import Model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -185,7 +185,7 @@ def test(opt):
 
     if opt.rgb:
         opt.input_channel = 3
-    model = Model(opt)
+    model = Model(opt.input_channel,opt.output_channel,opt.hidden_size,opt.num_class)
     print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
           opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
           opt.SequenceModeling, opt.Prediction)

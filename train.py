@@ -11,6 +11,7 @@ import torch.nn.init as init
 import torch.optim as optim
 import torch.utils.data
 import numpy as np
+from tqdm import tqdm
 
 from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
@@ -42,7 +43,6 @@ def train(opt):
     print('-' * 80)
     log.write('-' * 80 + '\n')
     log.close()
-    
     """ model configuration """
     if 'CTC' in opt.Prediction:
         converter = CTCLabelConverter(opt.character)
@@ -119,7 +119,6 @@ def train(opt):
         opt_log += '---------------------------------------\n'
         print(opt_log)
         opt_file.write(opt_log)
-
     """ start training """
     start_iter = 0
     if opt.saved_model != '':
@@ -133,8 +132,9 @@ def train(opt):
     best_accuracy = -1
     best_norm_ED = -1
     iteration = start_iter
-
+    pbar = tqdm(total = opt.num_iter)
     while(True):
+        pbar.update(1)
         # train part
         image_tensors, labels = train_dataset.get_batch()
         image = image_tensors.to(device)
@@ -193,7 +193,7 @@ def train(opt):
                 dashed_line = '-' * 80
                 head = f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F'
                 predicted_result_log = f'{dashed_line}\n{head}\n{dashed_line}\n'
-                for gt, pred, confidence in zip(labels[:5], preds[:5], confidence_score[:5]):
+                for gt, pred, confidence in zip(labels[:10], preds[:10], confidence_score[:10]):
                     if 'Attn' in opt.Prediction:
                         gt = gt[:gt.find('[s]')]
                         pred = pred[:pred.find('[s]')]
@@ -216,7 +216,7 @@ def train(opt):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp_name', help='Where to store logs and models')
+    parser.add_argument('--exp_name', type=str, help='Where to store logs and models')
     parser.add_argument('--train_data', required=True, help='path to training dataset')
     parser.add_argument('--valid_data', required=True, help='path to validation dataset')
     parser.add_argument('--manualSeed', type=int, default=1111, help='for random seed setting')
@@ -233,9 +233,9 @@ if __name__ == '__main__':
     parser.add_argument('--eps', type=float, default=1e-8, help='eps for Adadelta. default=1e-8')
     parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping value. default=5')
     """ Data processing """
-    parser.add_argument('--select_data', type=str, default='MJ-ST',
+    parser.add_argument('--select_data', type=str, default='/',
                         help='select training data (default is MJ-ST, which means MJ and ST used as training data)')
-    parser.add_argument('--batch_ratio', type=str, default='0.5-0.5',
+    parser.add_argument('--batch_ratio', type=str, default='1',
                         help='assign ratio for each selected data in the batch')
     parser.add_argument('--total_data_usage_ratio', type=str, default='1.0',
                         help='total data usage ratio, this ratio is multiplied to total number of data.')
@@ -246,6 +246,7 @@ if __name__ == '__main__':
     parser.add_argument('--character', type=str,
                         default='0123456789abcdefghijklmnopqrstuvwxyz', help='character label')
     parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')
+    parser.add_argument('--stat_dict', action='store_true', help='for sensitive character mode')
     parser.add_argument('--PAD', action='store_true', help='whether to keep ratio then pad for image resize')
     parser.add_argument('--data_filtering_off', action='store_true', help='for data_filtering_off mode')
     """ Model Architecture """
@@ -267,13 +268,31 @@ if __name__ == '__main__':
         opt.exp_name = f'{opt.Transformation}-{opt.FeatureExtraction}-{opt.SequenceModeling}-{opt.Prediction}'
         opt.exp_name += f'-Seed{opt.manualSeed}'
         # print(opt.exp_name)
+    else:
+        opt.exp_name = f'{opt.exp_name}-{opt.Transformation}-{opt.FeatureExtraction}-{opt.SequenceModeling}-{opt.Prediction}-Seed{opt.manualSeed}'
 
     os.makedirs(f'./saved_models/{opt.exp_name}', exist_ok=True)
-
     """ vocab / character number configuration """
     if opt.sensitive:
-        # opt.character += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        charlist = []
+        with open('ko_char.txt', 'r', encoding='utf-8') as f:
+            for c in f.readlines():
+                charlist.append(c[:-1])
+        opt.character = ''.join(charlist) + string.printable[:-38]
+
+    if opt.stat_dict:
+        opt.character = '0123456789'
+
+    if opt.FT:
+        charlist = []
+        with open('ko_char.txt', "r", encoding = "utf-8-sig") as f:
+            for c in f.readlines():
+                charlist.append(c[:-1])
+        number = '0123456789'
+        symbol  = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ '
+        en_char = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        opt.character = number + symbol + en_char + ''.join(charlist)
+
 
     """ Seed and GPU setting """
     # print("Random Seed: ", opt.manualSeed)
@@ -300,5 +319,4 @@ if __name__ == '__main__':
         If you dont care about it, just commnet out these line.)
         opt.num_iter = int(opt.num_iter / opt.num_gpu)
         """
-
     train(opt)

@@ -126,6 +126,20 @@ def hierarchical_dataset(root, opt, select_data='/'):
     return concatenated_dataset, dataset_log
 
 
+class ListDataset(Dataset):
+
+    def __init__(self, image_list):
+        self.image_list = image_list  
+        self.nSamples = len(image_list)
+
+    def __len__(self):
+        return self.nSamples
+
+    def __getitem__(self, index):
+        img = self.image_list[index]
+        label = ''
+        return (Image.fromarray(img, 'L'),label)
+
 class LmdbDataset(Dataset):
 
     def __init__(self, root, opt):
@@ -206,8 +220,8 @@ class LmdbDataset(Dataset):
                     img = Image.new('L', (self.opt.imgW, self.opt.imgH))
                 label = '[dummy_label]'
 
-            if not self.opt.sensitive:
-                label = label.lower()
+            # if not self.opt.sensitive:
+            #     label = label.lower()
 
             # We only train and evaluate on alphanumerics (or pre-defined character set in train.py)
             out_of_char = f'[^{self.opt.character}]'
@@ -251,6 +265,34 @@ class RawDataset(Dataset):
                 img = Image.new('L', (self.opt.imgW, self.opt.imgH))
 
         return (img, self.image_path_list[index])
+
+class InferenceDataset(Dataset):
+
+    def __init__(self, image_list,opt):
+        self.image_list = image_list
+        self.opt = opt
+        self.nSamples = len(image_list)
+
+    def __len__(self):
+        return self.nSamples
+
+    def __getitem__(self, index):
+        image = Image.fromarray(self.image_list[index])
+        try:
+            if self.opt.rgb:
+                img = image.convert('RGB')  # for color image
+            else:
+                img = image.convert('L')
+
+        except IOError:
+            print(f'Corrupted image for {index}')
+            # make dummy image and dummy label for corrupted image.
+            if self.opt.rgb:
+                img = Image.new('RGB', (self.opt.imgW, self.opt.imgH))
+            else:
+                img = Image.new('L', (self.opt.imgW, self.opt.imgH))
+
+        return (img, "")
 
 
 class ResizeNormalize(object):
