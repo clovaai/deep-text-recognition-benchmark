@@ -48,7 +48,7 @@ CUDA_VISIBLE_DEVICES=0 python3 demo.py \
 
 #### prediction results
 
-| demo images | [TPS-ResNet-BiLSTM-Attn](https://drive.google.com/open?id=1b59rXuGGmKne1AuHnkgDzoYgKeETNMv9) | [TPS-ResNet-BiLSTM-Attn (case-sensitive)](https://drive.google.com/open?id=1ajONZOgiG9pEYsQ-eBmgkVbMDuHgPCaY) |
+| demo images | [TRBA (**T**PS-**R**esNet-**B**iLSTM-**A**ttn)](https://drive.google.com/open?id=1b59rXuGGmKne1AuHnkgDzoYgKeETNMv9) | [TRBA (case-sensitive version)](https://drive.google.com/open?id=1ajONZOgiG9pEYsQ-eBmgkVbMDuHgPCaY) |
 | ---         |     ---      |          --- |
 | <img src="./demo_image/demo_1.png" width="300">    |   available   |  Available   |
 | <img src="./demo_image/demo_2.jpg" width="300">      |    shakeshack    |   SHARESHACK    |
@@ -78,7 +78,7 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py \
 --saved_model saved_models/None-VGG-BiLSTM-CTC-Seed1111/best_accuracy.pth
 ```
 
-3. Try to train and test our best accuracy combination (TPS-ResNet-BiLSTM-Attn) also. ([download pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW))
+3. Try to train and test our best accuracy model TRBA (**T**PS-**R**esNet-**B**iLSTM-**A**ttn) also. ([download pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW))
 ```
 CUDA_VISIBLE_DEVICES=0 python3 train.py \
 --train_data data_lmdb_release/training --valid_data data_lmdb_release/validation \
