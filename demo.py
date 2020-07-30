@@ -57,8 +57,8 @@ def demo(opt):
                 # Select max probabilty (greedy decoding) then decode index to character
                 preds_size = torch.IntTensor([preds.size(1)] * batch_size)
                 _, preds_index = preds.max(2)
-                preds_index = preds_index.view(-1)
-                preds_str = converter.decode(preds_index.data, preds_size.data)
+                # preds_index = preds_index.view(-1)
+                preds_str = converter.decode(preds_index, preds_size)
 
             else:
                 preds = model(image, text_for_pred, is_train=False)
