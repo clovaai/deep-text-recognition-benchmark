@@ -23,6 +23,10 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
     eval_data_list = ['IIIT5k_3000', 'SVT', 'IC03_860', 'IC03_867', 'IC13_857',
                       'IC13_1015', 'IC15_1811', 'IC15_2077', 'SVTP', 'CUTE80']
 
+    # # To easily compute the total accuracy of our paper.
+    # eval_data_list = ['IIIT5k_3000', 'SVT', 'IC03_867', 
+    #                   'IC13_1015', 'IC15_2077', 'SVTP', 'CUTE80']
+
     if calculate_infer_time:
         evaluation_batch_size = 1  # batch_size should be 1 to calculate the GPU inference time per image.
     else:
@@ -100,10 +104,17 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             # Calculate evaluation loss for CTC deocder.
             preds_size = torch.IntTensor([preds.size(1)] * batch_size)
             # permute 'preds' to use CTCloss format
-            cost = criterion(preds.log_softmax(2).permute(1, 0, 2), text_for_loss, preds_size, length_for_loss)
+            if opt.baiduCTC:
+                cost = criterion(preds.permute(1, 0, 2), text_for_loss, preds_size, length_for_loss) / batch_size
+            else:
+                cost = criterion(preds.log_softmax(2).permute(1, 0, 2), text_for_loss, preds_size, length_for_loss)
 
             # Select max probabilty (greedy decoding) then decode index to character
-            _, preds_index = preds.max(2)
+            if opt.baiduCTC:
+                _, preds_index = preds.max(2)
+                preds_index = preds_index.view(-1)
+            else:
+                _, preds_index = preds.max(2)
             preds_str = converter.decode(preds_index.data, preds_size.data)
         
         else:
@@ -246,6 +257,7 @@ if __name__ == '__main__':
     parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')
     parser.add_argument('--PAD', action='store_true', help='whether to keep ratio then pad for image resize')
     parser.add_argument('--data_filtering_off', action='store_true', help='for data_filtering_off mode')
+    parser.add_argument('--baiduCTC', action='store_true', help='for data_filtering_off mode')
     """ Model Architecture """
     parser.add_argument('--Transformation', type=str, required=True, help='Transformation stage. None|TPS')
     parser.add_argument('--FeatureExtraction', type=str, required=True, help='FeatureExtraction stage. VGG|RCNN|ResNet')
