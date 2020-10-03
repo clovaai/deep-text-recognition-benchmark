@@ -47,6 +47,8 @@ def demo(opt):
         for image_tensors, image_path_list in demo_loader:
             batch_size = image_tensors.size(0)
             image = image_tensors.to(device)
+            print(image.type())
+            print(image.shape)
             # For max length prediction
             length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size).to(device)
             text_for_pred = torch.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0).to(device)
@@ -59,6 +61,7 @@ def demo(opt):
                 _, preds_index = preds.max(2)
                 # preds_index = preds_index.view(-1)
                 preds_str = converter.decode(preds_index, preds_size)
+                print('Preds str {}'.format(preds_str))
 
             else:
                 preds = model(image, text_for_pred, is_train=False)
@@ -94,13 +97,13 @@ def demo(opt):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--image_folder', required=True, help='path to image_folder which contains text images')
-    parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-    parser.add_argument('--batch_size', type=int, default=192, help='input batch size')
+    parser.add_argument('--workers', type=int, help='number of data loading workers', default=8)
+    parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
     parser.add_argument('--saved_model', required=True, help="path to saved_model to evaluation")
     """ Data processing """
-    parser.add_argument('--batch_max_length', type=int, default=25, help='maximum-label-length')
-    parser.add_argument('--imgH', type=int, default=32, help='the height of the input image')
-    parser.add_argument('--imgW', type=int, default=100, help='the width of the input image')
+    parser.add_argument('--batch_max_length', type=int, default=1000, help='maximum-label-length')
+    parser.add_argument('--imgH', type=int, default=1080, help='the height of the input image')
+    parser.add_argument('--imgW', type=int, default=1920, help='the width of the input image')
     parser.add_argument('--rgb', action='store_true', help='use rgb input')
     parser.add_argument('--character', type=str, default='0123456789abcdefghijklmnopqrstuvwxyz', help='character label')
     parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')

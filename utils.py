@@ -1,4 +1,5 @@
 import torch
+import os
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -167,3 +168,13 @@ class Averager(object):
         if self.n_count != 0:
             res = self.sum / float(self.n_count)
         return res
+
+
+def extract_all_failed_imgaes():
+    folder = './failed'
+    failed_image_names = []
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            if file.startswith('CHS'):
+                failed_image_names.append(file)
+    return failed_image_names

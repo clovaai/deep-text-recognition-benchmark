@@ -4,6 +4,7 @@ import re
 import six
 import math
 import lmdb
+import cv2
 import torch
 
 from natsort import natsorted
@@ -216,6 +217,28 @@ class LmdbDataset(Dataset):
         return (img, label)
 
 
+class CropImageDataset(Dataset):
+    
+    def __init__(self, images, opt):
+        self.opt = opt
+        self.images = []
+        for image in images:
+            pil_image = cv2pil(image)
+            self.images.append(pil_image)
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        if index in range(0, len(self.images)):
+            return (self.images[index], index)
+        else:
+            if self.opt.rgb:
+                return (Image.new('RGB', (self.opt.imgW, self.opt.imgH)), index)
+            else:
+                return (Image.new('L', (self.opt.imgW, self.opt.imgH)), index)
+            
+
 class RawDataset(Dataset):
 
     def __init__(self, root, opt):
@@ -337,3 +360,9 @@ def tensor2im(image_tensor, imtype=np.uint8):
 def save_image(image_numpy, image_path):
     image_pil = Image.fromarray(image_numpy)
     image_pil.save(image_path)
+
+def cv2pil(cv_img):
+    if cv_img.ndim == 2 or cv_img.shape[-1] == 1:
+        return Image.fromarray(cv_img)
+    else:
+        return Image.fromarray(cv2.cvtColor(cv_img, cv2.COLOR_RGB2BGR))
