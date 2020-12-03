@@ -101,7 +101,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             preds = model(image, text_for_pred)
             forward_time = time.time() - start_time
 
-            # Calculate evaluation loss for CTC deocder.
+            # Calculate evaluation loss for CTC decoder.
             preds_size = torch.IntTensor([preds.size(1)] * batch_size)
             # permute 'preds' to use CTCloss format
             if opt.baiduCTC:
