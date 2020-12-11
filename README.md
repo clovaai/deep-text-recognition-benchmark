@@ -1,5 +1,5 @@
 # What Is Wrong With Scene Text Recognition Model Comparisons? Dataset and Model Analysis
-| [paper](https://arxiv.org/abs/1904.01906) | [training and evaluation data](https://github.com/clovaai/deep-text-recognition-benchmark#download-lmdb-dataset-for-traininig-and-evaluation-from-here) | [failure cases and cleansed label](https://github.com/clovaai/deep-text-recognition-benchmark#download-failure-cases-and-cleansed-label-from-here) | [pretrained model](https://drive.google.com/drive/folders/15WPsuPJDCzhp2SvYZLRj8mAlT3zmoAMW) | [Baidu ver(passwd:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ) |
+| [paper](https://arxiv.org/abs/1904.01906) | [training and evaluation data](https://github.com/clovaai/deep-text-recognition-benchmark#download-lmdb-dataset-for-traininig-and-evaluation-from-here) | [failure cases and cleansed label](https://github.com/clovaai/deep-text-recognition-benchmark#download-failure-cases-and-cleansed-label-from-here) | [pretrained model](https://www.dropbox.com/sh/j3xmli4di1zuv3s/AAArdcPgz7UFxIHUuKNOeKv_a?dl=0) | [Baidu ver(passwd:rryk)](https://pan.baidu.com/s/1KSNLv4EY3zFWHpBYlpFCBQ) |
 
 Official PyTorch implementation of our four-stage STR framework, that most existing STR models fit into. <br>
 Using this framework allows for the module-wise contributions to performance in terms of accuracy, speed, and memory demand, under one consistent set of training and evaluation datasets. <br>
@@ -30,7 +30,7 @@ In the paper, expriments were performed with **PyTorch 0.4.1, CUDA 9.0**.
 pip3 install lmdb pillow torchvision nltk natsort
 ```
 
-### Download lmdb dataset for traininig and evaluation from [here](https://drive.google.com/drive/folders/192UfE9agQUMNq6AgU3_E05_FcPZK4hyt)
+### Download lmdb dataset for traininig and evaluation from [here](https://www.dropbox.com/sh/i39abvnefllx2si/AAAbAYRvxzRp3cIE5HzqUw3ra?dl=0)
 data_lmdb_release.zip contains below. <br>
 training datasets : [MJSynth (MJ)](http://www.robots.ox.ac.uk/~vgg/data/text/)[1] and [SynthText (ST)](http://www.robots.ox.ac.uk/~vgg/data/scenetext/)[2] \
 validation datasets : the union of the training sets [IC13](http://rrc.cvc.uab.es/?ch=2)[3], [IC15](http://rrc.cvc.uab.es/?ch=4)[4], [IIIT](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html)[5], and [SVT](http://www.iapr-tc11.org/mediawiki/index.php/The_Street_View_Text_Dataset)[6].\
@@ -107,7 +107,7 @@ CUDA_VISIBLE_DEVICES=0 python3 test.py \
 * `--saved_model`: assign saved model to evaluation.
 * `--benchmark_all_eval`: evaluate with 10 evaluation dataset versions, same with Table 1 in our paper.
 
-## Download failure cases and cleansed label from [here](https://drive.google.com/drive/folders/1W84gS9T5GU5l5Wp3VV1aeXIIKV87yjRm)
+## Download failure cases and cleansed label from [here](https://www.dropbox.com/s/5knh1gb1z593fxj/image_release_190624.zip?dl=0)
 image_release.zip contains failure case images and benchmark evaluation images with cleansed label.
 <img src="./figures/failure-case.jpg" width="1000" title="failure cases">
 
