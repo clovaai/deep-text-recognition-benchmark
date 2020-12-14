@@ -49,7 +49,7 @@ CUDA_VISIBLE_DEVICES=0 python3 demo.py \
 
 #### prediction results
 
-| demo images | [TRBA (**T**PS-**R**esNet-**B**iLSTM-**A**ttn)](https://drive.google.com/open?id=1b59rXuGGmKne1AuHnkgDzoYgKeETNMv9) | [TRBA (case-sensitive version)](https://drive.google.com/open?id=1ajONZOgiG9pEYsQ-eBmgkVbMDuHgPCaY) |
+| demo images | [TRBA (**MODEL1**)](https://uofwaterloo-my.sharepoint.com/:u:/g/personal/zraisi_uwaterloo_ca/EbsHtHNkqd1JoD_FNTkSiXEBBZTuYp6RZEFFBT_tPcjeBA?e=uDVfSl) | [TRBA (case-sensitive version)](https://drive.google.com/open?id=1ajONZOgiG9pEYsQ-eBmgkVbMDuHgPCaY) |
 | ---         |     ---      |          --- |
 | <img src="./demo_image/demo_1.png" width="300">    |   available   |  Available   |
 | <img src="./demo_image/demo_2.jpg" width="300">      |    shakeshack    |   SHARESHACK    |
