@@ -81,10 +81,13 @@ def train(opt):
     model.train()
     if opt.saved_model != '':
         print(f'loading pretrained model from {opt.saved_model}')
+        state_dict = torch.load(opt.saved_model)
         if opt.FT:
-            model.load_state_dict(torch.load(opt.saved_model), strict=False)
+            last_layer_params = ["module.Prediction.generator.weight","module.Prediction.generator.bias"]
+            state_dict = {k: v for k,v in state_dict.items() if k not in last_layer_params}
+            model.load_state_dict(state_dict, strict=False)
         else:
-            model.load_state_dict(torch.load(opt.saved_model))
+            model.load_state_dict(state_dict)
     print("Model:")
     print(model)
 

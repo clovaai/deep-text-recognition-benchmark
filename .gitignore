@@ -206,3 +206,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+local_scripts/
