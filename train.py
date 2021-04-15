@@ -83,7 +83,11 @@ def train(opt):
         print(f'loading pretrained model from {opt.saved_model}')
         state_dict = torch.load(opt.saved_model)
         if opt.FT:
-            last_layer_params = ["module.Prediction.generator.weight","module.Prediction.generator.bias"]
+            last_layer_params = [
+                "module.Prediction.generator.weight",
+                "module.Prediction.generator.bias",
+                "module.Prediction.attention_cell.rnn.weight_ih"
+            ]
             state_dict = {k: v for k,v in state_dict.items() if k not in last_layer_params}
             model.load_state_dict(state_dict, strict=False)
         else:
