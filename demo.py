@@ -41,6 +41,12 @@ def demo(opt):
         num_workers=int(opt.workers),
         collate_fn=AlignCollate_demo, pin_memory=True)
 
+
+    import pandas as pd
+    import numpy as np
+    results_df = pd.DataFrame(columns=['file_name', 'predicted_label', 'confidence_score'])
+
+            
     # predict
     model.eval()
     with torch.no_grad():
@@ -67,8 +73,10 @@ def demo(opt):
                 _, preds_index = preds.max(2)
                 preds_str = converter.decode(preds_index, length_for_pred)
 
-
-            log = open(f'./log_demo_result.txt', 'a')
+           
+            
+            #print("log file : ", './' + opt.image_folder + '_result.txt')
+            log = open(opt.image_folder + '_result.txt', 'a')
             dashed_line = '-' * 80
             head = f'{"image_path":25s}\t{"predicted_labels":25s}\tconfidence score'
             
@@ -89,7 +97,11 @@ def demo(opt):
                 print(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}')
                 log.write(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}\n')
 
+                results_df = results_df.append({'file_name':img_name.split('/')[-1], 'predicted_label':pred, 'confidence_score':np.round(confidence_score.numpy(), decimals=4)}, ignore_index=True)
+
             log.close()
+
+        results_df.to_csv(opt.image_folder + "results.csv", index = False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
