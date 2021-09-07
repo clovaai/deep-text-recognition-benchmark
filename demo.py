@@ -12,7 +12,7 @@ from model import Model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def demo(opt):
+def demo(opt, image_directory):
     """ model configuration """
     if 'CTC' in opt.Prediction:
         converter = CTCLabelConverter(opt.character)
@@ -34,7 +34,7 @@ def demo(opt):
 
     # prepare data. two demo images from https://github.com/bgshih/crnn#run-demo
     AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-    demo_data = RawDataset(root=opt.image_folder, opt=opt)  # use RawDataset
+    demo_data = RawDataset(root=image_directory, opt=opt)  # use RawDataset
     demo_loader = torch.utils.data.DataLoader(
         demo_data, batch_size=opt.batch_size,
         shuffle=False,
@@ -76,7 +76,7 @@ def demo(opt):
            
             
             #print("log file : ", './' + opt.image_folder + '_result.txt')
-            log = open(opt.image_folder + '_result.txt', 'a')
+            log = open(image_directory + '/predicted_labels.txt', 'a')
             dashed_line = '-' * 80
             head = f'{"image_path":25s}\t{"predicted_labels":25s}\tconfidence score'
             
@@ -94,14 +94,20 @@ def demo(opt):
                 # calculate confidence score (= multiply of pred_max_prob)
                 confidence_score = pred_max_prob.cumprod(dim=0)[-1]
 
+                # truncate img name to only include image file name
+                # print(img_name)
+                img_name =  img_name.split('/')[-1]
+               
+               
+                
                 print(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}')
                 log.write(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}\n')
 
-                results_df = results_df.append({'file_name':img_name.split('/')[-1], 'predicted_label':pred, 'confidence_score':np.round(confidence_score.numpy(), decimals=4)}, ignore_index=True)
+                results_df = results_df.append({'file_name':img_name, 'predicted_label':pred, 'confidence_score':np.round(confidence_score.numpy(), decimals=4)}, ignore_index=True)
 
             log.close()
 
-        results_df.to_csv(opt.image_folder + "results.csv", index = False)
+        results_df.to_csv(image_directory + "/predicted_labels.csv", index = False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -127,7 +133,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_channel', type=int, default=512,
                         help='the number of output channel of Feature extractor')
     parser.add_argument('--hidden_size', type=int, default=256, help='the size of the LSTM hidden state')
-
+    parser.add_argument('--mult_folders',action='store_true', help='demo over list of image folders')
     opt = parser.parse_args()
 
     """ vocab / character number configuration """
@@ -138,4 +144,38 @@ if __name__ == '__main__':
     cudnn.deterministic = True
     opt.num_gpu = torch.cuda.device_count()
 
-    demo(opt)
+    import os
+    print(opt.image_folder)
+
+    if os.path.isfile(opt.image_folder + '/values.csv'):
+        # this is the image directory, run demo over this directory
+        demo(opt, opt.image_folder)
+    else:
+        
+        # find sub-directories and run demo over them.
+        sub_folders = os.listdir(opt.image_folder)
+        for sub_folder in sub_folders:
+            if os.path.isfile(opt.image_folder + sub_folder + '/values.csv'):
+                demo(opt, opt.image_folder + sub_folder )
+    # if os.path.isdir(opt.image_folder): # is a directory?
+    #     print("Found items in folder")
+        
+    #     for item in folder_items:
+    #         if os.path.isdir(item): # directory
+                
+    #             image_directory_path = opt.image_folder + item
+    #             gt_values_path       = image_directory_path + '/values.csv'
+    #             if os.path.isfile(gt_values_path):                
+    #                 print(gt_values_path)
+    #                 demo(opt, image_directory_path)
+    #             else : 
+    #                 print("Did not find ground truth file.")
+
+    #         else: # not a directory, find gt file here
+    #             gt_values_path     = opt.image_folder + '/values.csv'
+    #             if os.path.isfile(gt_values_path):         
+    #                 print(gt_values_path)
+                    
+    #             else : 
+    #                 print("Did not find ground truth file.")
+  
