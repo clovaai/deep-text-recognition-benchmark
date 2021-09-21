@@ -7,7 +7,7 @@ import torch.utils.data
 import torch.nn.functional as F
 
 from utils import CTCLabelConverter, AttnLabelConverter
-from dataset import RawDataset, AlignCollate
+from dataset import RawDataset, AlignCollate, SingleImageDataset
 from model import Model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -32,20 +32,41 @@ def demo(opt):
     print('loading pretrained model from %s' % opt.saved_model)
     model.load_state_dict(torch.load(opt.saved_model, map_location=device))
 
-    # prepare data. two demo images from https://github.com/bgshih/crnn#run-demo
+
     AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-    demo_data = RawDataset(root=opt.image_folder, opt=opt)  # use RawDataset
-    demo_loader = torch.utils.data.DataLoader(
-        demo_data, batch_size=opt.batch_size,
+    if opt.image_folder is not None:        
+         
+        
+        image_data = RawDataset(root=opt.image_folder, opt=opt)  # use RawDataset
+        image_loader = torch.utils.data.DataLoader(
+            image_data, batch_size=opt.batch_size,
+            shuffle=False,
+            num_workers=int(opt.workers),
+            collate_fn=AlignCollate_demo, pin_memory=True)
+
+    elif opt.image_path is not None:
+
+        image_data = SingleImageDataset(opt.image_path, opt = opt)
+        image_loader = torch.utils.data.DataLoader(
+        image_data, batch_size=opt.batch_size,
         shuffle=False,
         num_workers=int(opt.workers),
         collate_fn=AlignCollate_demo, pin_memory=True)
 
+    else:
+        print("Could not find image folder or image path for inference.")
+
+
+   
+
+
     # predict
     model.eval()
     with torch.no_grad():
-        for image_tensors, image_path_list in demo_loader:
+        for image_tensors, image_path_list in image_loader:
             batch_size = image_tensors.size(0)
+            print("batch size : ", batch_size)
+            print("image tensor size :", image_tensors.shape)
             image = image_tensors.to(device)
             # For max length prediction
             length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size).to(device)
@@ -67,6 +88,7 @@ def demo(opt):
                 _, preds_index = preds.max(2)
                 preds_str = converter.decode(preds_index, length_for_pred)
 
+            print("preds ", preds.shape)
 
             log = open(f'./log_demo_result.txt', 'a')
             dashed_line = '-' * 80
@@ -74,6 +96,8 @@ def demo(opt):
             
             print(f'{dashed_line}\n{head}\n{dashed_line}')
             log.write(f'{dashed_line}\n{head}\n{dashed_line}\n')
+
+           
 
             preds_prob = F.softmax(preds, dim=2)
             preds_max_prob, _ = preds_prob.max(dim=2)
@@ -85,7 +109,7 @@ def demo(opt):
 
                 # calculate confidence score (= multiply of pred_max_prob)
                 confidence_score = pred_max_prob.cumprod(dim=0)[-1]
-
+                
                 print(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}')
                 log.write(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}\n')
 
@@ -93,7 +117,8 @@ def demo(opt):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image_folder', required=True, help='path to image_folder which contains text images')
+    parser.add_argument('--image_folder', required= False, help='path to image_folder which contains text images')
+    parser.add_argument('--image_path', required = False, help = 'path to image for testing')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
     parser.add_argument('--batch_size', type=int, default=192, help='input batch size')
     parser.add_argument('--saved_model', required=True, help="path to saved_model to evaluation")

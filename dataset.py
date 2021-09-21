@@ -216,6 +216,38 @@ class LmdbDataset(Dataset):
         return (img, label)
 
 
+class SingleImageDataset(Dataset):
+
+    def __init__(self,image_path, opt):
+        self.opt = opt
+        self.image_path_list = [image_path]
+        self.nSamples = 1
+    
+    def __len__(self):
+        return self.nSamples
+
+    def __getitem__(self, index):
+        try:
+            if self.opt.rgb:
+                img = Image.open(self.image_path_list[index]).convert('RGB')
+            else:
+                img = Image.open(self.image_path_list[index]).convert('L')
+            
+        except IOError:
+            print(f'Corrupted image for {index}')
+            # make dummy image and dummy label for corrupted image.
+            if self.opt.rgb:
+                img = Image.new('RGB', (self.opt.imgW, self.opt.imgH))
+            else:
+                img = Image.new('L', (self.opt.imgW, self.opt.imgH))
+
+        return (img, self.image_path_list[index])
+
+        
+
+
+
+
 class RawDataset(Dataset):
 
     def __init__(self, root, opt):
