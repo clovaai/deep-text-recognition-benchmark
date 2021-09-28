@@ -20,7 +20,9 @@ from modules.transformation import TPS_SpatialTransformerNetwork
 from modules.feature_extraction import VGG_FeatureExtractor, RCNN_FeatureExtractor, ResNet_FeatureExtractor
 from modules.sequence_modeling import BidirectionalLSTM
 from modules.prediction import Attention
-
+from utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
+import torch.nn.init as init
+import torch
 
 class Model(nn.Module):
 
@@ -90,3 +92,58 @@ class Model(nn.Module):
             prediction = self.Prediction(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.batch_max_length)
 
         return prediction
+
+def load_model(opt):
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    """ model configuration """
+    if 'CTC' in opt.Prediction:
+        if opt.baiduCTC:
+            converter = CTCLabelConverterForBaiduWarpctc(opt.character)
+        else:
+            converter = CTCLabelConverter(opt.character)
+    else:
+        converter = AttnLabelConverter(opt.character)
+    opt.num_class = len(converter.character)
+
+    if opt.rgb:
+        opt.input_channel = 3
+    model = Model(opt)
+    print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
+          opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
+          opt.SequenceModeling, opt.Prediction)
+
+    # weight initialization
+    for name, param in model.named_parameters():
+        if 'localization_fc2' in name:
+            print(f'Skip {name} as it is already initialized')
+            continue
+        try:
+            if 'bias' in name:
+                init.constant_(param, 0.0)
+            elif 'weight' in name:
+                init.kaiming_normal_(param)
+        except Exception as e:  # for batchnorm.
+            if 'weight' in name:
+                param.data.fill_(1)
+            continue
+
+    # data parallel for multi-GPU
+    model = torch.nn.DataParallel(model).to(device)
+    model.train()
+    if opt.saved_model != '':
+        print(f'loading pretrained model from {opt.saved_model}')
+        state_dict = torch.load(opt.saved_model)
+        if opt.FT:
+            last_layer_params = [
+                "module.Prediction.generator.weight",
+                "module.Prediction.generator.bias",
+                "module.Prediction.attention_cell.rnn.weight_ih"
+            ]
+            state_dict = {k: v for k,v in state_dict.items() if k not in last_layer_params}
+            model.load_state_dict(state_dict, strict=False)
+        else:
+            model.load_state_dict(state_dict)
+    print("Model:")
+    print(model)
+    return model, converter

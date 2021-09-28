@@ -30,11 +30,70 @@ class TPS_SpatialTransformerNetwork(nn.Module):
         batch_C_prime = self.LocalizationNetwork(batch_I)  # batch_size x K x 2
         build_P_prime = self.GridGenerator.build_P_prime(batch_C_prime)  # batch_size x n (= I_r_width x I_r_height) x 2
         build_P_prime_reshape = build_P_prime.reshape([build_P_prime.size(0), self.I_r_size[0], self.I_r_size[1], 2])
-        
-        if torch.__version__ > "1.2.0":
-            batch_I_r = F.grid_sample(batch_I, build_P_prime_reshape, padding_mode='border', align_corners=True)
+    
+        # Source for onnx: https://github.com/clovaai/deep-text-recognition-benchmark/issues/284
+        if not torch.onnx.is_in_onnx_export():
+            if torch.__version__ > "1.2.0":
+                batch_I_r = F.grid_sample(batch_I, build_P_prime_reshape, padding_mode='border', align_corners=True)
+            else:
+                batch_I_r = F.grid_sample(batch_I, build_P_prime_reshape, padding_mode='border')
         else:
-            batch_I_r = F.grid_sample(batch_I, build_P_prime_reshape, padding_mode='border')
+            # workwround for export to onnx
+            # see here for details: https://github.com/open-mmlab/mmcv/pull/953/
+            n, c, h, w = batch_I.shape
+            gn, gh, gw, _ = build_P_prime_reshape.shape
+            assert n == gn
+
+            x = build_P_prime_reshape[:, :, :, 0]
+            y = build_P_prime_reshape[:, :, :, 1]
+
+            x = ((x + 1) / 2) * (w - 1)
+            y = ((y + 1) / 2) * (h - 1)
+
+            x = x.view(n, -1)
+            y = y.view(n, -1)
+
+            x0 = torch.floor(x).long()
+            y0 = torch.floor(y).long()
+            x1 = x0 + 1
+            y1 = y0 + 1
+
+            wa = ((x1 - x) * (y1 - y)).unsqueeze(1)
+            wb = ((x1 - x) * (y - y0)).unsqueeze(1)
+            wc = ((x - x0) * (y1 - y)).unsqueeze(1)
+            wd = ((x - x0) * (y - y0)).unsqueeze(1)
+
+            # Apply default for grid_sample function zero padding
+            im_padded = F.pad(batch_I, pad=[1, 1, 1, 1], mode='replicate')
+            padded_h = h + 2
+            padded_w = w + 2
+            # save points positions after padding
+            x0, x1, y0, y1 = x0 + 1, x1 + 1, y0 + 1, y1 + 1
+
+            # Clip coordinates to padded image size
+            x0 = torch.where(x0 < 0, torch.tensor(0), x0)
+            x0 = torch.where(x0 > padded_w - 1, torch.tensor(padded_w - 1), x0)
+            x1 = torch.where(x1 < 0, torch.tensor(0), x1)
+            x1 = torch.where(x1 > padded_w - 1, torch.tensor(padded_w - 1), x1)
+            y0 = torch.where(y0 < 0, torch.tensor(0), y0)
+            y0 = torch.where(y0 > padded_h - 1, torch.tensor(padded_h - 1), y0)
+            y1 = torch.where(y1 < 0, torch.tensor(0), y1)
+            y1 = torch.where(y1 > padded_h - 1, torch.tensor(padded_h - 1), y1)
+
+            im_padded = im_padded.view(n, c, -1)
+
+            x0_y0 = (x0 + y0 * padded_w).unsqueeze(1).expand(-1, c, -1)
+            x0_y1 = (x0 + y1 * padded_w).unsqueeze(1).expand(-1, c, -1)
+            x1_y0 = (x1 + y0 * padded_w).unsqueeze(1).expand(-1, c, -1)
+            x1_y1 = (x1 + y1 * padded_w).unsqueeze(1).expand(-1, c, -1)
+
+            Ia = torch.gather(im_padded, 2, x0_y0)
+            Ib = torch.gather(im_padded, 2, x0_y1)
+            Ic = torch.gather(im_padded, 2, x1_y0)
+            Id = torch.gather(im_padded, 2, x1_y1)
+
+            batch_I_r = (Ia * wa + Ib * wb + Ic * wc + Id * wd).reshape(n, c, gh, gw)
+
 
         return batch_I_r
 
