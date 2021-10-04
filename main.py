@@ -8,7 +8,7 @@ import argparse
 
 if __name__ == '__main__':
     
-    from deepTextRecognitionBenchmark.trbaOcr import TrbaOCR
+    from deep_text_recognition.trbaOcr import TrbaOCR 
     
     saved_model = 'models/TPS-ResNet-BiLSTM-Attn.pth'
     trbaOCR = TrbaOCR(saved_model)    

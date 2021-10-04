@@ -6,9 +6,9 @@ import torch.backends.cudnn as cudnn
 import torch.utils.data
 import torch.nn.functional as F
 
-from deepTextRecognitionBenchmark.utils import CTCLabelConverter, AttnLabelConverter
-from deepTextRecognitionBenchmark.dataset import RawDataset, AlignCollate, SingleImageDataset
-from deepTextRecognitionBenchmark.model import Model
+from deep_text_recognition.utils import CTCLabelConverter, AttnLabelConverter
+from deep_text_recognition.dataset import RawDataset, AlignCollate, SingleImageDataset
+from deep_text_recognition.model import Model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 import argparse
