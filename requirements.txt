@@ -1,0 +1,9 @@
+lmdb==1.2.1
+natsort==7.1.1
+numpy==1.21.2
+Pillow==8.3.2
+six==1.16.0
+torch==1.9.1
+torchvision==0.10.1
+TRBA==0.1
+typing-extensions==3.10.0.2
