@@ -73,7 +73,7 @@ class TrbaOCR:
         else:
             print("Could not find image path for inference.")
 
-        self.predict(image_loader)        
+        return self.predict(image_loader)        
 
 
     def img_to_ean(self, pillow_image):
@@ -95,7 +95,7 @@ class TrbaOCR:
             print("Could not find image path for inference.")
 
 
-        self.predict(image_loader)
+        return self.predict(image_loader)
 
     def predict(self,image_loader):
 
@@ -120,6 +120,7 @@ class TrbaOCR:
     
         # predict
         model.eval()
+        output = {}
         with torch.no_grad():
             for image_tensors, image_path_list in image_loader:
                 batch_size = image_tensors.size(0)
@@ -150,6 +151,9 @@ class TrbaOCR:
                     confidence_score = pred_max_prob.cumprod(dim=0)[-1]                  
                 
                    
-                    print(f'\t{pred:25s}\t{confidence_score:0.4f}')
-
+                    #print(f'\t{pred:25s}\t{confidence_score:0.4f}')
+                    output['pred'] = pred
+                    output['score'] = np.array(confidence_score)
+                    
         
+        return output

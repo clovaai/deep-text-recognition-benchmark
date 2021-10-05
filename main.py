@@ -17,8 +17,9 @@ if __name__ == '__main__':
 
     ## Run from image path
     image_path = 'demo_image/demo_1.png'
-    trbaOCR.img_path_to_ean(image_path)
-
+    ean = trbaOCR.img_path_to_ean(image_path)
+    print("predicted : ", ean['pred'], ean['score'])
     ## Run from Pillow image
     pil_image = Image.open(image_path)#   
-    trbaOCR.pillow_img_to_ean(pil_image)
+    predicted_text = trbaOCR.img_to_ean(pil_image)
+    print("predicted_text : ", ean['pred'], ean['score'])
