@@ -101,6 +101,7 @@ class TrbaOCR:
 
         opt = self.opt
         device = self.opt.device
+        print("Predict with Device : ", device)
       
         """ model configuration """
         converter = AttnLabelConverter(opt.character)
