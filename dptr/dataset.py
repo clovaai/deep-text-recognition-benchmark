@@ -215,7 +215,7 @@ class LmdbDataset(Dataset):
 
         return (img, label)
 
-
+""" A dataset that consists of a single Pillow image"""
 class PillowImageDataset(Dataset):
 
     def __init__(self,pillow_image, opt):
@@ -248,7 +248,7 @@ class PillowImageDataset(Dataset):
         
 
 
-
+""" A dataset that reads a single image from an image path."""
 class SingleImageDataset(Dataset):
 
     def __init__(self,image_path, opt):
