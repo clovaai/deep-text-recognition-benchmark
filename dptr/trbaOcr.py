@@ -52,6 +52,25 @@ class TrbaOCR:
         opt.num_gpu = torch.cuda.device_count()
         self.opt = opt
 
+        opt = self.opt
+        device = self.opt.device
+        print("Predict with Device : ", device)
+      
+        """ model configuration and initialization"""
+        self.converter = AttnLabelConverter(opt.character)
+        opt.num_class = len(self.converter.character)
+
+        if opt.rgb:
+            opt.input_channel = 3
+        self.model = Model(opt)
+        print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
+            opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
+            opt.SequenceModeling, opt.Prediction)
+        self.model = torch.nn.DataParallel(self.model).to(device)
+
+        # load model
+        print('loading pretrained model from %s' % opt.saved_model)
+        self.model.load_state_dict(torch.load(opt.saved_model, map_location=device))
     
 
     def img_path_to_ean(self, image_path):
@@ -98,27 +117,9 @@ class TrbaOCR:
         return self.predict(image_loader)
 
     def predict(self,image_loader):
-
         opt = self.opt
+        model = self.model        
         device = self.opt.device
-        print("Predict with Device : ", device)
-      
-        """ model configuration """
-        converter = AttnLabelConverter(opt.character)
-        opt.num_class = len(converter.character)
-
-        if opt.rgb:
-            opt.input_channel = 3
-        model = Model(opt)
-        print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
-            opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
-            opt.SequenceModeling, opt.Prediction)
-        model = torch.nn.DataParallel(model).to(device)
-
-        # load model
-        print('loading pretrained model from %s' % opt.saved_model)
-        model.load_state_dict(torch.load(opt.saved_model, map_location=device))
-       
     
         # predict
         model.eval()
@@ -137,7 +138,7 @@ class TrbaOCR:
 
                 # select max probabilty (greedy decoding) then decode index to character
                 _, preds_index = preds.max(2)
-                preds_str = converter.decode(preds_index, length_for_pred)
+                preds_str = self.converter.decode(preds_index, length_for_pred)
 
                 print("preds ", preds.shape)                          
             
