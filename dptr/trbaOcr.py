@@ -10,17 +10,17 @@ import torch.nn.functional as F
 from dptr.utils import CTCLabelConverter, AttnLabelConverter
 from dptr.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
 from dptr.model import Model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 import argparse
 
 class TrbaOCR:
-    def __init__(self, saved_model):
+    def __init__(self, saved_model, device):
        
         ## Argument parser carried forward as configuration data structure from deep-text-recongnition-benchmark. 
         parser  = argparse.ArgumentParser()
         opt     = parser.parse_args()
-        
+        opt.device = device
         opt.saved_model         = saved_model
 
 
@@ -100,6 +100,7 @@ class TrbaOCR:
     def predict(self,image_loader):
 
         opt = self.opt
+        device = self.opt.device
       
         """ model configuration """
         converter = AttnLabelConverter(opt.character)

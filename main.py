@@ -13,7 +13,7 @@ if __name__ == '__main__':
     from dptr.trbaOcr import TrbaOCR 
     
     saved_model = 'models/TPS-ResNet-BiLSTM-Attn.pth'
-    trbaOCR = TrbaOCR(saved_model)    
+    trbaOCR = TrbaOCR(saved_model, device='cpu')    
 
     ## Run from image path
     image_path = 'demo_image/demo_1.png'
