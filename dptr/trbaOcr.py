@@ -163,7 +163,7 @@ class TrbaOCR:
                    
                     #print(f'\t{pred:25s}\t{confidence_score:0.4f}')
                     output['pred'] = pred
-                    output['score'] = np.array(confidence_score)
+                    output['score'] = np.array(confidence_score.cpu())
                     
         
         return output
