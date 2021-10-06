@@ -62,16 +62,23 @@ class TrbaOCR:
 
         if opt.rgb:
             opt.input_channel = 3
-        self.model = Model(opt)
-        print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
+        
+        
+        # load model
+        try : 
+
+            self.model = Model(opt)
+            print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
             opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
             opt.SequenceModeling, opt.Prediction)
-        self.model = torch.nn.DataParallel(self.model).to(device)
-
-        # load model
-        print('loading pretrained model from %s' % opt.saved_model)
-        self.model.load_state_dict(torch.load(opt.saved_model, map_location=device))
-    
+            self.model = torch.nn.DataParallel(self.model).to(device)
+            
+            
+            print('loading pretrained model from %s' % opt.saved_model)
+            self.model.load_state_dict(torch.load(opt.saved_model, map_location=device))
+            print('loaded pretrained model!!!')
+        except Exception:
+            print("Error loading model")
 
     def img_path_to_ean(self, image_path):
         print("Image Path to EAN")
