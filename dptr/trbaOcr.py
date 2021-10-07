@@ -64,8 +64,7 @@ class TrbaOCR:
             opt.input_channel = 3
         
         
-        # load model
-        #try : 
+      
 
         self.model = Model(opt)
         print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
@@ -76,12 +75,11 @@ class TrbaOCR:
         
         print('loading pretrained model from %s' % opt.saved_model)
         self.model.load_state_dict(torch.load(opt.saved_model, map_location=device))
-        print('loaded pretrained model!!!')
-        # except Exception:
-        #     print("Error loading model")
+        print('Successfully loaded pretrained model')
+       
 
     def img_path_to_ean(self, image_path):
-        print("Image Path to EAN")
+       
 
         opt = self.opt
 
@@ -103,7 +101,7 @@ class TrbaOCR:
 
 
     def img_to_ean(self, pillow_image):
-        print("Pillow Image to EAN")
+       
         opt = self.opt
 
         AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
@@ -134,8 +132,7 @@ class TrbaOCR:
         with torch.no_grad():
             for image_tensors, image_path_list in image_loader:
                 batch_size = image_tensors.size(0)
-                print("batch size : ", batch_size)
-                print("image tensor size :", image_tensors.shape)
+               
                 image = image_tensors.to(device)
                 # For max length prediction
                 length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size).to(device)
@@ -147,7 +144,7 @@ class TrbaOCR:
                 _, preds_index = preds.max(2)
                 preds_str = self.converter.decode(preds_index, length_for_pred)
 
-                print("preds ", preds.shape)                          
+                                    
             
                 preds_prob = F.softmax(preds, dim=2)
                 preds_max_prob, _ = preds_prob.max(dim=2)
