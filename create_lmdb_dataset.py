@@ -26,15 +26,16 @@ def writeCache(env, cache):
             txn.put(k, v)
 
 
-def createDataset(inputPath, gtFile, outputPath, checkValid=True):
+def createDataset(datasetPath, gtFile, checkValid=True):
     """
     Create LMDB dataset for training and evaluation.
     ARGS:
-        inputPath  : input folder path where starts imagePath
+        datasetPath  : input folder path where starts imagePath
         outputPath : LMDB output path
         gtFile     : list of image path and label
         checkValid : if true, check the validity of every image
     """
+    outputPath = datasetPath + "result/"
     os.makedirs(outputPath, exist_ok=True)
     env = lmdb.open(outputPath, map_size=1099511627776)
     cache = {}
@@ -46,7 +47,7 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
     nSamples = len(datalist)
     for i in range(nSamples):
         imagePath, label = datalist[i].strip('\n').split('\t')
-        imagePath = os.path.join(inputPath, imagePath)
+        imagePath = os.path.join(datasetPath, imagePath)
 
         # # only use alphanumeric data
         # if re.search('[^a-zA-Z0-9]', label):
@@ -109,12 +110,13 @@ def generate_gt_file_for_dataset(data_path):
     print(annotations_df.shape)
     print(annotations_df.head())
 
-    annotations_df.to_csv(gt_file, header=None, index = None, sep = '\t', mode='a') 
+    annotations_df.to_csv(gt_file, header=None, index = None, sep = '\t', mode='a')
+    return gt_file
 
 
-def create_lmdb_dataset(datasetPath,inputPath, gtFile, outputPath ):
-    generate_gt_file_for_dataset(datasetPath )
-    createDataset(inputPath, gtFile, outputPath, checkValid=True)
+def create_lmdb_dataset(datasetPath):
+    gtFilePath = generate_gt_file_for_dataset(datasetPath )
+    createDataset(datasetPath, gtFilePath, checkValid=True)
 
 if __name__ == '__main__':
     fire.Fire(create_lmdb_dataset)
