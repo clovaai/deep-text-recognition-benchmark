@@ -18,7 +18,8 @@ class TrbaOCR:
     def __init__(self, saved_model, device):
        
         ## Argument parser carried forward as configuration data structure from deep-text-recongnition-benchmark. 
-        parser  = argparse.ArgumentParser()
+        parser  = argparse.ArgumentParser(prog='TrbaOCR')
+        
         opt     = parser.parse_args()
         opt.device = device
         opt.saved_model         = saved_model
@@ -121,7 +122,7 @@ class TrbaOCR:
 
         return self.predict(image_loader)
 
-    def predict(self,image_loader):
+    def predict(self, image_loader):
         opt = self.opt
         model = self.model        
         device = self.opt.device

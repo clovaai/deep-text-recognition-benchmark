@@ -9,9 +9,7 @@ import pandas as pd
 import numpy as np
 
 
-
-
-def generate_values_file():
+def generate_values_file(parent_folder):
     """
     Create LMDB dataset for training and evaluation.
     ARGS:
@@ -21,7 +19,7 @@ def generate_values_file():
         checkValid : if true, check the validity of every image
     """
 
-    parent_folder = "/home/raki-dedigama/projects/ocr-ean/ocr-datasets/labelled-data/kar-smm/"
+    #parent_folder = "/home/raki-dedigama/projects/ocr-ean/ocr-datasets/labelled-data/kar-smm/"
     folders = [folder for folder in os.listdir(parent_folder)]
     for folder in folders :
 

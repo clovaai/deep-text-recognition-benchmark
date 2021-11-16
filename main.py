@@ -10,8 +10,8 @@ from PIL import Image
     
 from dptr.trbaOcr import TrbaOCR 
 
-saved_model = '/home/raki-dedigama/projects/ocr-ean/trba-models/best_accuracy.pth'
-trbaOCR = TrbaOCR(saved_model, device='cpu')    
+saved_model = '/home/raki-dedigama/projects/ocr-ean/trba-models/ean-models/best_accuracy.pth'
+trbaOCR = TrbaOCR(saved_model, device='cuda')    
 
 # Run from image path
 image_path = 'demo_image/demo_1.png'
