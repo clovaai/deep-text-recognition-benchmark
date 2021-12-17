@@ -11,6 +11,7 @@ import torch.nn.init as init
 import torch.optim as optim
 import torch.utils.data
 import numpy as np
+from tqdm.auto import tqdm
 
 from utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
@@ -142,6 +143,7 @@ def train(opt):
     best_norm_ED = -1
     iteration = start_iter
 
+    pbar = tqdm(total=opt.num_iter)
     while(True):
         # train part
         image_tensors, labels = train_dataset.get_batch()
@@ -224,6 +226,8 @@ def train(opt):
             print('end the training')
             sys.exit()
         iteration += 1
+        pbar.update(1)
+    pbar.close()
 
 
 if __name__ == '__main__':
