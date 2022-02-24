@@ -6,23 +6,23 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.utils.data
 import torch.nn.functional as F
+import torch.onnx
 
 from dptr.utils import CTCLabelConverter, AttnLabelConverter
 from dptr.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
 from dptr.model import Model
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 import argparse
 
 class TrbaOCR:
-    def __init__(self, saved_model, device):
+    def __init__(self, device):
        
         ## Argument parser carried forward as configuration data structure from deep-text-recongnition-benchmark. 
         parser  = argparse.ArgumentParser(prog='TrbaOCR')
         
         opt     = parser.parse_args()
         opt.device = device
-        opt.saved_model         = saved_model
+        #opt.saved_model         = saved_model
 
 
         opt.Transformation      = 'TPS'
@@ -48,6 +48,7 @@ class TrbaOCR:
 
         if opt.sensitive:
             opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+            
         cudnn.benchmark = True
         cudnn.deterministic = True
         opt.num_gpu = torch.cuda.device_count()
@@ -69,17 +70,45 @@ class TrbaOCR:
 
         self.model = Model(opt)
         print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
-        opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
-        opt.SequenceModeling, opt.Prediction)
-        self.model = torch.nn.DataParallel(self.model).to(device)
+            opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
+            opt.SequenceModeling, opt.Prediction)
+
+        #self.model = torch.nn.DataParallel(self.model).to(device)
+        self.model = self.model.to(device)
         
         
-        print('loading pretrained model from %s' % opt.saved_model)
-        self.model.load_state_dict(torch.load(opt.saved_model, map_location=device))
+        
+
+    def load_model_from_disk(self, saved_model):
+        print('loading pretrained model from %s' % saved_model)
+        self.model = torch.load(saved_model)
+        #self.model.load_state_dict(torch.load(opt.saved_model, map_location=device))
         print('Successfully loaded pretrained model')
        
 
+    def img_to_image_loader(self, image):
+
+        opt = self.opt
+
+        AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
+                   
+        if image is not None:
+            
+            image_data = PillowImageDataset(image, opt)
+            image_loader = torch.utils.data.DataLoader(
+                image_data, batch_size=opt.batch_size,
+                shuffle=False,
+                num_workers=int(opt.workers),
+                collate_fn=AlignCollate_demo, pin_memory=True)
+
+        else:
+            print("Could not find image path for inference.")
+        
+        return image_loader
+
+
     def img_path_to_ean(self, image_path):
+       
        
 
         opt = self.opt
@@ -90,10 +119,10 @@ class TrbaOCR:
         if image_path is not None:
             image_data = SingleImageDataset(image_path, opt = opt)
             image_loader = torch.utils.data.DataLoader(
-            image_data, batch_size=opt.batch_size,
-            shuffle=False,
-            num_workers=int(opt.workers),
-            collate_fn=AlignCollate_demo, pin_memory=True)
+                image_data, batch_size=opt.batch_size,
+                shuffle=False,
+                num_workers=int(opt.workers),
+                collate_fn=AlignCollate_demo, pin_memory=True)
 
         else:
             print("Could not find image path for inference.")
@@ -111,10 +140,10 @@ class TrbaOCR:
             
             image_data = PillowImageDataset(pillow_image, opt)
             image_loader = torch.utils.data.DataLoader(
-            image_data, batch_size=opt.batch_size,
-            shuffle=False,
-            num_workers=int(opt.workers),
-            collate_fn=AlignCollate_demo, pin_memory=True)
+                image_data, batch_size=opt.batch_size,
+                shuffle=False,
+                num_workers=int(opt.workers),
+                collate_fn=AlignCollate_demo, pin_memory=True)
 
         else:
             print("Could not find image path for inference.")
@@ -124,22 +153,25 @@ class TrbaOCR:
 
     def predict(self, image_loader):
         opt = self.opt
-        model = self.model        
+             
         device = self.opt.device
     
         # predict
-        model.eval()
+        self.model.eval()
         output = {}
         with torch.no_grad():
             for image_tensors, image_path_list in image_loader:
                 batch_size = image_tensors.size(0)
                
                 image = image_tensors.to(device)
+                print("image shape " ,image.shape)
                 # For max length prediction
                 length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size).to(device)
                 text_for_pred = torch.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0).to(device)
-        
-                preds = model(image, text_for_pred, is_train=False)
+                print("text for pred shape :", text_for_pred.size())
+                preds = self.model(image, text_for_pred, is_train=False)
+                print("pred shape ", preds.shape)
+             
 
                 # select max probabilty (greedy decoding) then decode index to character
                 _, preds_index = preds.max(2)

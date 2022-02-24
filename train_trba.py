@@ -76,7 +76,8 @@ def train(opt):
             continue
 
     # data parallel for multi-GPU
-    model = torch.nn.DataParallel(model).to(device)
+    #model = torch.nn.DataParallel(model).to(device)
+    model = model.to(device)
     model.train()
     if opt.saved_model != '':
         print(f'loading pretrained model from {opt.saved_model}')
@@ -191,10 +192,11 @@ def train(opt):
                 # keep best accuracy model (on valid dataset)
                 if current_accuracy > best_accuracy:
                     best_accuracy = current_accuracy
-                    torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_accuracy.pth')
+                    #torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_accuracy.pt')
+                    torch.save(model, f'./saved_models/{opt.exp_name}/best_accuracy.pt')
                 if current_norm_ED > best_norm_ED:
                     best_norm_ED = current_norm_ED
-                    torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_norm_ED.pth')
+                    torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_norm_ED.pt')
                     print("Save best model ", './saved_models/{opt.exp_name}/best_norm_ED.pth')
                     
                 best_model_log = f'{"Best_accuracy":17s}: {best_accuracy:0.3f}, {"Best_norm_ED":17s}: {best_norm_ED:0.2f}'
@@ -320,3 +322,7 @@ if __name__ == '__main__':
         """
 
     train(opt)
+
+
+## TRAIN command ( default batch size = 192)
+# python3 train_trba.py --train_data <path_to_lmdb_train_result_files> --valid_data <path_to_lmdb_valid_result_files> --batch_size 48

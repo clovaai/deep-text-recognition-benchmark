@@ -1,5 +1,5 @@
 import string
-import argparse
+
 import pandas as pd
 
 import torch
@@ -117,8 +117,7 @@ def demo(opt):
             log.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
- 
+    
 
     from dptr.config_parser import ConfigParser
     config_parser = ConfigParser()
