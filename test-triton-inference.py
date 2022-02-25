@@ -34,3 +34,6 @@ trba_triton_detector.parse_trba_model()
 # preprocessed_batched_images = triton_client.
 preds = trba_triton_detector.recognize_ocr(pil_image)
 print("pred shape ", preds.shape)
+
+ean = trba_triton_detector.post_process_preds(preds)
+print("predicted : ", ean['pred'], ean['score'])

@@ -1,13 +1,12 @@
 
 import json
-import sys
-from attrdict import AttrDict
+
 from dptr.trbaOcr import TrbaOCR
 import numpy as np
 from functools import partial
 
-from dptr.utils import CTCLabelConverter, AttnLabelConverter
-from dptr.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
+
+from dptr.dataset import PillowImageDataset, AlignCollate
 
 
 import tritonclient.grpc as grpcclient
@@ -15,6 +14,10 @@ import tritonclient.http as httpclient
 from tritonclient.utils import InferenceServerException
 
 import torch
+
+import torch.utils.data
+import torch.nn.functional as F
+
 from dptr.trba_triton_client import TRBATritonClient
 
 class TRITON_OCR_FLAGS():
@@ -43,12 +46,13 @@ class TRBATritonDetector:
 
     def __init__(self, triton_flags : json, trba_model_config : TrbaOCR):   
         FLAGS = TRITON_OCR_FLAGS(triton_flags = triton_flags)
-        self.triton_client = TRBATritonClient(FLAGS)     
+        self.triton_client = TRBATritonClient(FLAGS)   
+          
         ## required for opt opreations in image loader ToDo - Remove dependency
         self.trba_ocr = TrbaOCR()  
         self.opt  = self.trba_ocr.opt
-        #self.trbaOCR = trba_model_config # trba models / utils / packages   
-
+        self.converter = self.trba_ocr.converter 
+       
 
   
     def parse_trba_model(self):
@@ -87,18 +91,17 @@ class TRBATritonDetector:
         self.output_dtype = output_metadata.datatype
 
     def img_to_image_loader(self, image):
+        
 
-        opt = self.opt
-
-        AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
+        AlignCollate_demo = AlignCollate(imgH=self.opt.imgH, imgW=self.opt.imgW, keep_ratio_with_pad=self.opt.PAD)
                    
         if image is not None:
             
-            image_data = PillowImageDataset(image, opt)
+            image_data = PillowImageDataset(image, self.opt)
             image_loader = torch.utils.data.DataLoader(
-                image_data, batch_size=opt.batch_size,
+                image_data, batch_size=self.opt.batch_size,
                 shuffle=False,
-                num_workers=int(opt.workers),
+                num_workers=int(self.opt.workers),
                 collate_fn=AlignCollate_demo, pin_memory=True)
 
         else:
@@ -130,6 +133,45 @@ class TRBATritonDetector:
                     self.max_batch_size)
       
         return preds
+
+
+    def post_process_preds(self, preds):
+
+        # convert to torch tensor
+        preds = torch.from_numpy(preds)
+        print("pred shape :", preds.shape)
+
+         # select max probabilty (greedy decoding) then decode index to character
+  
+        batch_size = 1
+        output = {}
+
+        length_for_pred = torch.IntTensor([self.opt.batch_max_length] * batch_size).to(self.opt.device)
+        
+        
+        _, preds_index = preds.max(2)
+        preds_str = self.converter.decode(preds_index, length_for_pred)
+
+                            
+    
+        preds_prob = F.softmax(preds, dim=2)
+        preds_max_prob, _ = preds_prob.max(dim=2)
+        for pred, pred_max_prob in zip(preds_str, preds_max_prob):
+            if 'Attn' in self.opt.Prediction:
+                pred_EOS = pred.find('[s]')
+                pred = pred[:pred_EOS]  # prune after "end of sentence" token ([s])
+                pred_max_prob = pred_max_prob[:pred_EOS]
+
+            # calculate confidence score (= multiply of pred_max_prob)
+            confidence_score = pred_max_prob.cumprod(dim=0)[-1]                  
+        
+            
+            #print(f'\t{pred:25s}\t{confidence_score:0.4f}')
+            output['pred'] = pred
+            output['score'] = np.array(confidence_score.cpu())
+
+        return output
+                    
 
    
       

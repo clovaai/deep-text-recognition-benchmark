@@ -11,7 +11,7 @@ import torch
     
 #from dptr.trbaOcr import TrbaOCR 
 
-saved_model = '/home/raki-dedigama/projects/rr/model-training/ean/models/trained-models/best_accuracy.pt'
+saved_model = '/home/raki-dedigama/projects/rr/model-training/ean/models/trained-models/model.pt'
 #trbaOCR = TrbaOCR(device='cuda')    
 #trbaOCR.load_model_from_disk(saved_model)
 
