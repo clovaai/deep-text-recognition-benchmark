@@ -6,42 +6,48 @@ from dptr.trbaOcr import TrbaOCR
 import numpy as np
 from functools import partial
 
+from dptr.utils import CTCLabelConverter, AttnLabelConverter
+from dptr.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
+
 
 import tritonclient.grpc as grpcclient
 import tritonclient.http as httpclient
 from tritonclient.utils import InferenceServerException
 
 import torch
-
+from dptr.trba_triton_client import TRBATritonClient
 
 class TRITON_OCR_FLAGS():
     """
     Initializes the configuration parameters for Region Inference Triton Client.  
     """
-    def __init__(self, detector_config:json):
+    def __init__(self, triton_flags:json):
         
-        self.url        = detector_config["TRITON_OCR_SERVER_URL"]
-        self.verbose    = detector_config["TRITON_OCR_FLAG_VERBOSE"]                                                           # 'Enable verbose output'
-        self.protocol   = detector_config["TRITON_OCR_PROTOCOL"]                  # Protocol (HTTP/gRPC) used to communicate with server
-        self.model_name = detector_config["TRITON_OCR_MODEL_NAME"]
+        self.url        = triton_flags["TRITON_OCR_SERVER_URL"]
+        self.verbose    = triton_flags["TRITON_OCR_FLAG_VERBOSE"]                                                           # 'Enable verbose output'
+        self.protocol   = triton_flags["TRITON_OCR_PROTOCOL"]                  # Protocol (HTTP/gRPC) used to communicate with server
+        self.model_name = triton_flags["TRITON_OCR_MODEL_NAME"]
         
         self.model_version = ""
-        #self.model_version = str(detector_config("TRITON_REGION_INFERENCE_MODEL_VERSION"))                                                        # Version of model. Default is to use latest version
-        self.batch_size    = int(detector_config["TRITON_OCR_BATCH_SIZE"]) 
-        self.classes       = int(detector_config["TRITON_OCR_CLASSES"])                   # Number of class results to report. Default is 1
+        #self.model_version = str(triton_flags("TRITON_REGION_INFERENCE_MODEL_VERSION"))                                                        # Version of model. Default is to use latest version
+        self.batch_size    = int(triton_flags["TRITON_OCR_BATCH_SIZE"]) 
+        self.classes       = int(triton_flags["TRITON_OCR_CLASSES"])                   # Number of class results to report. Default is 1
         self.scaling       = None                                                             # Type of scaling to apply to image pixels. Default is NONE
-        self.async_set     = detector_config["TRITON_OCR_ASYNC_SET"]    # 'Use asynchronous inference API'
-        self.streaming     = detector_config["TRITON_OCR_STREAMING"]                                                       # Use streaming inference API. The flag is only available with gRPC protocol.
+        self.async_set     = triton_flags["TRITON_OCR_ASYNC_SET"]    # 'Use asynchronous inference API'
+        self.streaming     = triton_flags["TRITON_OCR_STREAMING"]                                                       # Use streaming inference API. The flag is only available with gRPC protocol.
        
 
+from dptr.trbaOcr import TrbaOCR
 
-from trba_triton_client import TRBATritonClient
 class TRBATritonDetector:
 
-    def __init__(self, detector_config : json):   
-        FLAGS = TRITON_OCR_FLAGS(detector_config = detector_config)
+    def __init__(self, triton_flags : json, trba_model_config : TrbaOCR):   
+        FLAGS = TRITON_OCR_FLAGS(triton_flags = triton_flags)
         self.triton_client = TRBATritonClient(FLAGS)     
-        self.trbaOCR = TrbaOCR() # trba models / utils / packages   
+        ## required for opt opreations in image loader ToDo - Remove dependency
+        self.trba_ocr = TrbaOCR()  
+        self.opt  = self.trba_ocr.opt
+        #self.trbaOCR = trba_model_config # trba models / utils / packages   
 
 
   
@@ -80,13 +86,31 @@ class TRBATritonDetector:
         self.input_text_dtype = input_text_metadata.datatype
         self.output_dtype = output_metadata.datatype
 
+    def img_to_image_loader(self, image):
 
+        opt = self.opt
+
+        AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
+                   
+        if image is not None:
+            
+            image_data = PillowImageDataset(image, opt)
+            image_loader = torch.utils.data.DataLoader(
+                image_data, batch_size=opt.batch_size,
+                shuffle=False,
+                num_workers=int(opt.workers),
+                collate_fn=AlignCollate_demo, pin_memory=True)
+
+        else:
+            print("Could not find image path for inference.")
+        
+        return image_loader
 
     def recognize_ocr(self, image):
         
         # image loader converts image to torch tensor, preprocesses to model input size
         # and returns as a list of tensors
-        image_loader = self.trbaOCR.img_to_image_loader(pil_image) 
+        image_loader = self.img_to_image_loader(image) 
 
         preprocessed_image_data = []
         # Triton server expects input tensor to be a numpy array
@@ -133,11 +157,12 @@ if __name__ == "__main__":
     with open("triton.json") as f:
         triton_config = json.load(f)
     ocr_component = "EANs"
-    detector_config = triton_config[ocr_component]
-   
+    
+    triton_flags = triton_config[ocr_component]
+    trba_model_config = TrbaOCR()
 
     # intialize client
-    trba_triton_detector = TRBATritonDetector(detector_config = detector_config)
+    trba_triton_detector = TRBATritonDetector(triton_flags = triton_flags, trba_model_config= trba_model_config)
 
     
     trba_triton_detector.parse_trba_model()   
