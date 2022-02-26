@@ -1,7 +1,7 @@
 ## This application initiates a TRBA model based on Deep-Text-Recognition-Framework for a single
 ## image inference. 
 
-
+from trba.trba_detector import TRBADetector
 
 import argparse
 import numpy as np
@@ -15,7 +15,7 @@ saved_model = '/home/raki-dedigama/projects/rr/model-training/ean/models/trained
 #trbaOCR = TrbaOCR(device='cuda')    
 #trbaOCR.load_model_from_disk(saved_model)
 
-from trba.trba_detector import TRBADetector
+
 trba_detector = TRBADetector()
 trba_detector.load_model_from_disk(saved_model)
 

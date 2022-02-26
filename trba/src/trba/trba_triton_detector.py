@@ -1,12 +1,12 @@
 
 import json
 
-from dptr.trbaOcr import TrbaOCR
+from trba.trbaOcr import TrbaOCR
 import numpy as np
 from functools import partial
 
 
-from dptr.dataset import PillowImageDataset, AlignCollate
+from trba.dataset import PillowImageDataset, AlignCollate
 
 
 import tritonclient.grpc as grpcclient
