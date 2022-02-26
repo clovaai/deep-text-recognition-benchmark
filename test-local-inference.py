@@ -11,11 +11,11 @@ import torch
     
 #from dptr.trbaOcr import TrbaOCR 
 
-saved_model = '/home/raki-dedigama/projects/rr/model-training/ean/models/trained-models/model.pt'
+saved_model = '/home/raki-dedigama/projects/rr/model-training/ean/models/trained-models/best_accuracy.pt'
 #trbaOCR = TrbaOCR(device='cuda')    
 #trbaOCR.load_model_from_disk(saved_model)
 
-from dptr.trba_detector import TRBADetector
+from trba.trba_detector import TRBADetector
 trba_detector = TRBADetector()
 trba_detector.load_model_from_disk(saved_model)
 

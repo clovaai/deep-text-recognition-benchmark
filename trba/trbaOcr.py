@@ -8,9 +8,9 @@ import torch.utils.data
 import torch.nn.functional as F
 import torch.onnx
 
-from dptr.utils import CTCLabelConverter, AttnLabelConverter
-from dptr.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
-from dptr.model import Model
+from trba.utils import CTCLabelConverter, AttnLabelConverter
+from trba.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
+from trba.model import Model
 
 import argparse
 

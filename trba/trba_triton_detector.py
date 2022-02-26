@@ -18,7 +18,7 @@ import torch
 import torch.utils.data
 import torch.nn.functional as F
 
-from dptr.trba_triton_client import TRBATritonClient
+from trba.trba_triton_client import TRBATritonClient
 
 class TRITON_OCR_FLAGS():
     """
@@ -40,7 +40,7 @@ class TRITON_OCR_FLAGS():
         self.streaming     = triton_flags["TRITON_OCR_STREAMING"]                                                       # Use streaming inference API. The flag is only available with gRPC protocol.
        
 
-from dptr.trbaOcr import TrbaOCR
+from trba.trbaOcr import TrbaOCR
 
 class TRBATritonDetector:
 

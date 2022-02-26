@@ -12,9 +12,9 @@ import torch.optim as optim
 import torch.utils.data
 import numpy as np
 
-from dptr.utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
-from dptr.dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
-from dptr.model import Model
+from trba.utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
+from trba.dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
+from trba.model import Model
 from test import validation
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -77,6 +77,7 @@ def train(opt):
 
     # data parallel for multi-GPU
     #model = torch.nn.DataParallel(model).to(device)
+
     model = model.to(device)
     model.train()
     if opt.saved_model != '':

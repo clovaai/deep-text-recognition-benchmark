@@ -9,11 +9,11 @@ import torch.utils.data
 import torch.nn.functional as F
 import torch.onnx
 
-from dptr.utils import CTCLabelConverter, AttnLabelConverter
-from dptr.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
-from dptr.model import Model
+from trba.utils import CTCLabelConverter, AttnLabelConverter
+from trba.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
+from trba.model import Model
 
-from dptr.trbaOcr import TrbaOCR
+from trba.trbaOcr import TrbaOCR
 
 class TRBADetector():
 
@@ -54,49 +54,6 @@ class TRBADetector():
         return image_loader
 
 
-    # def img_path_to_ean(self, image_path):
-       
-       
-
-    #     opt = self.opt
-
-    #     """Single Image Dataset Preparation from Image Path """
-    #     AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-          
-    #     if image_path is not None:
-    #         image_data = SingleImageDataset(image_path, opt = opt)
-    #         image_loader = torch.utils.data.DataLoader(
-    #             image_data, batch_size=opt.batch_size,
-    #             shuffle=False,
-    #             num_workers=int(opt.workers),
-    #             collate_fn=AlignCollate_demo, pin_memory=True)
-
-    #     else:
-    #         print("Could not find image path for inference.")
-
-    #     return self.predict(image_loader)        
-
-
-    # def img_to_ean(self, pillow_image):
-       
-    #     opt = self.opt
-
-    #     AlignCollate_demo = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
-                   
-    #     if pillow_image is not None:
-            
-    #         image_data = PillowImageDataset(pillow_image, opt)
-    #         image_loader = torch.utils.data.DataLoader(
-    #             image_data, batch_size=opt.batch_size,
-    #             shuffle=False,
-    #             num_workers=int(opt.workers),
-    #             collate_fn=AlignCollate_demo, pin_memory=True)
-
-    #     else:
-    #         print("Could not find image path for inference.")
-
-
-        return self.predict(image_loader)
 
     def predict(self, image):
         
