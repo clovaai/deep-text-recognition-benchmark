@@ -11,9 +11,9 @@ import torch.nn.functional as F
 import numpy as np
 from nltk.metrics.distance import edit_distance
 
-from trba.utils import CTCLabelConverter, AttnLabelConverter, Averager
-from trba.dataset import hierarchical_dataset, AlignCollate
-from trba.model import Model
+from trba.core.utils import CTCLabelConverter, AttnLabelConverter, Averager
+from trba.core.dataset import hierarchical_dataset, AlignCollate
+from trba.core.model import Model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
