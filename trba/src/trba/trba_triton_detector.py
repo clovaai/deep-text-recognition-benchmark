@@ -44,7 +44,7 @@ from trba.trbaOcr import TrbaOCR
 
 class TRBATritonDetector:
 
-    def __init__(self, triton_flags : json, trba_model_config : TrbaOCR):   
+    def __init__(self, triton_flags : json):   
         FLAGS = TRITON_OCR_FLAGS(triton_flags = triton_flags)
         self.triton_client = TRBATritonClient(FLAGS)   
           

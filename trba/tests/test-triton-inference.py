@@ -28,7 +28,7 @@ trba_model_config = TrbaOCR()
 
 #from trba.src.trba_triton_detector import TRBATritonDetector
 
-trba_triton_detector = TRBATritonDetector(triton_flags = triton_flags, trba_model_config= trba_model_config)
+trba_triton_detector = TRBATritonDetector(triton_flags = triton_flags)
 
 
 trba_triton_detector.parse_trba_model()   
