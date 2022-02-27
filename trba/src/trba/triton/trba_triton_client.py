@@ -1,7 +1,7 @@
-import json
+
 import sys
 from attrdict import AttrDict
-from trba.trbaOcr import TrbaOCR
+
 import numpy as np
 from functools import partial
 

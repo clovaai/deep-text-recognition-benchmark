@@ -9,11 +9,11 @@ import torch.utils.data
 import torch.nn.functional as F
 import torch.onnx
 
-from trba.utils import CTCLabelConverter, AttnLabelConverter
-from trba.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
-from trba.model import Model
+from trba.core.utils import CTCLabelConverter, AttnLabelConverter
+from trba.core.dataset import PillowImageDataset, RawDataset, AlignCollate, SingleImageDataset
+from trba.core.model import Model
 
-from trba.trbaOcr import TrbaOCR
+from trba.core.trbaOcr import TrbaOCR
 
 class TRBADetector():
 
