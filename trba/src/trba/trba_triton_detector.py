@@ -11,31 +11,31 @@ from trba.core.trbaOcr import TrbaOCR
 from trba.core.dataset import PillowImageDataset, AlignCollate
 from trba.triton.trba_triton_client import TRBATritonClient
 
-class TRITON_OCR_FLAGS():
+class TRITON_FLAGS():
     """
     Initializes the configuration parameters for Region Inference Triton Client.  
     """
     def __init__(self, triton_flags:json):
         
-        self.url        = triton_flags["TRITON_OCR_SERVER_URL"]
-        self.verbose    = triton_flags["TRITON_OCR_FLAG_VERBOSE"]                                                           # 'Enable verbose output'
-        self.protocol   = triton_flags["TRITON_OCR_PROTOCOL"]                  # Protocol (HTTP/gRPC) used to communicate with server
-        self.model_name = triton_flags["TRITON_OCR_MODEL_NAME"]
+        self.url        = triton_flags["TRITON_SERVER_URL"]
+        self.verbose    = triton_flags["TRITON_FLAG_VERBOSE"]                                                           # 'Enable verbose output'
+        self.protocol   = triton_flags["TRITON_PROTOCOL"]                  # Protocol (HTTP/gRPC) used to communicate with server
+        self.model_name = triton_flags["TRITON_MODEL_NAME"]
         
         self.model_version = ""
         #self.model_version = str(triton_flags("TRITON_REGION_INFERENCE_MODEL_VERSION"))                                                        # Version of model. Default is to use latest version
-        self.batch_size    = int(triton_flags["TRITON_OCR_BATCH_SIZE"]) 
-        self.classes       = int(triton_flags["TRITON_OCR_CLASSES"])                   # Number of class results to report. Default is 1
+        self.batch_size    = int(triton_flags["TRITON_BATCH_SIZE"]) 
+        self.classes       = int(triton_flags["TRITON_CLASSES"])                   # Number of class results to report. Default is 1
         self.scaling       = None                                                             # Type of scaling to apply to image pixels. Default is NONE
-        self.async_set     = triton_flags["TRITON_OCR_ASYNC_SET"]    # 'Use asynchronous inference API'
-        self.streaming     = triton_flags["TRITON_OCR_STREAMING"]                                                       # Use streaming inference API. The flag is only available with gRPC protocol.
+        self.async_set     = triton_flags["TRITON_ASYNC_SET"]    # 'Use asynchronous inference API'
+        self.streaming     = triton_flags["TRITON_STREAMING"]                                                       # Use streaming inference API. The flag is only available with gRPC protocol.
        
 
 
 class TRBATritonDetector:
 
     def __init__(self, triton_flags : json):   
-        FLAGS = TRITON_OCR_FLAGS(triton_flags = triton_flags)
+        FLAGS = TRITON_FLAGS(triton_flags = triton_flags)
         self.triton_client = TRBATritonClient(FLAGS)   
           
         ## required for opt opreations in image loader ToDo - Remove dependency
