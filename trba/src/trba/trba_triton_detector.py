@@ -81,6 +81,10 @@ class TRBATritonDetector:
         self.output_dtype = output_metadata.datatype
 
     def img_to_image_loader(self, image):
+        '''
+        Image loader converts image to torch tensor, preprocesses to model input size
+        and returns as a list of tensors
+        '''
         
 
         AlignCollate_demo = AlignCollate(imgH=self.opt.imgH, imgW=self.opt.imgW, keep_ratio_with_pad=self.opt.PAD)
@@ -101,11 +105,11 @@ class TRBATritonDetector:
 
     def recognize_ocr(self, image):
         
-        # image loader converts image to torch tensor, preprocesses to model input size
-        # and returns as a list of tensors
+        
         image_loader = self.img_to_image_loader(image) 
 
         preprocessed_image_data = []
+        
         # Triton server expects input tensor to be a numpy array
         for image_tensors, image_path_list in image_loader:                
                 
@@ -204,38 +208,4 @@ if __name__ == "__main__":
     print("pred shape ", preds.shape)
     
  
-    # for image_tensors, image_path_list in image_loader:
-    #     batch_size = image_tensors.size(0)
-        
-    #     image = image_tensors.to(device)
-    #     print("image shape " ,image.shape)
-    #     # For max length prediction
-    #     length_for_pred = torch.IntTensor([opt.batch_max_length] * batch_size).to(device)
-    #     text_for_pred = torch.LongTensor(batch_size, opt.batch_max_length + 1).fill_(0).to(device)
-
-        
-        
-        #preds = self.model(image, text_for_pred, is_train=False)
-        
-        
-
-       
-
-    #triton_client.parse_model()
-    
-    
-    # batched_images = _batch_images(img)           
-    
-    # preprocessed_batched_images = triton_client.ingest_batch_of_images(batched_images)        
-    # bboxes_batch = triton_client.get_infer_results(preprocessed_batched_images)        
-        
-    # bboxes_array = np.array(bboxes_batch)        
-
-    # detection_results = []
-    # # check if output is 3 dimensional # batch, detections, 7 values
-    # if len(bboxes_array.shape) == 3 : 
-    
-    #     detection_results = _build_detection_results_from_triton_output(img, bboxes_array, self.detection_classes)
-    #     return detection_results
-    # else:
-    #     return None
+   
