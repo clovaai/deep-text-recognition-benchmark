@@ -85,7 +85,8 @@ def train(opt):
         if opt.FT:
             model.load_state_dict(torch.load(opt.saved_model), strict=False)
         else:
-            model.load_state_dict(torch.load(opt.saved_model))
+            torch.load(opt.saved_model)
+            #model.load_state_dict(torch.load(opt.saved_model))
     print("Model:")
     print(model)
 
@@ -193,11 +194,11 @@ def train(opt):
                 # keep best accuracy model (on valid dataset)
                 if current_accuracy > best_accuracy:
                     best_accuracy = current_accuracy
-                    #torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_accuracy.pt')
-                    torch.save(model, f'./saved_models/{opt.exp_name}/best_accuracy.pt')
+                    #torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_accuracy.pth')
+                    torch.save(model, f'./saved_models/{opt.exp_name}/best_accuracy.pth')
                 if current_norm_ED > best_norm_ED:
                     best_norm_ED = current_norm_ED
-                    torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_norm_ED.pt')
+                    torch.save(model.state_dict(), f'./saved_models/{opt.exp_name}/best_norm_ED.pth')
                     print("Save best model ", './saved_models/{opt.exp_name}/best_norm_ED.pth')
                     
                 best_model_log = f'{"Best_accuracy":17s}: {best_accuracy:0.3f}, {"Best_norm_ED":17s}: {best_norm_ED:0.2f}'

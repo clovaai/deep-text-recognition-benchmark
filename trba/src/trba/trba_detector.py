@@ -29,7 +29,7 @@ class TRBADetector():
     def load_model_from_disk(self, saved_model):
         print('loading pretrained model from %s' % saved_model)
         self.model = torch.load(saved_model)
-        #self.model.load_state_dict(torch.load(opt.saved_model, map_location=device))
+        #self.model.load_state_dict(torch.load(saved_model, map_location=self.opt.device))
         print('Successfully loaded pretrained model')
        
 
