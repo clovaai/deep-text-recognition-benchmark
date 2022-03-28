@@ -137,9 +137,9 @@ if __name__ == "__main__":
         "character": "#皖沪津渝冀晋蒙辽吉黑苏浙京闽赣鲁豫鄂湘粤桂琼川贵云西陕甘青宁新abcdefghjklmnpqrstuvwxyz0123456789",  # 合理的字符集, # 表示 unknow word
     }
     provinces = ["京", "津", "冀", "晋", "蒙", "辽", "吉", "黑", "沪",
-             "苏", "浙", "皖", "闽", "赣", "鲁", "豫", "鄂", "湘",
-             "粤", "桂", "琼", "渝", "川", "贵", "云", "藏", "陕",
-             "甘", "青", "宁", "新"]
+                "苏", "浙", "皖", "闽", "赣", "鲁", "豫", "鄂", "湘",
+                "粤", "桂", "琼", "渝", "川", "贵", "云", "藏", "陕",
+                "甘", "青", "宁", "新"]
     all_characters = "".join(provinces)+"#abcdefghjklmnpqrstuvwxyz0123456789警港澳学领使挂"
     dataset = MyLmdbDataset(
         "/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db", 

@@ -1,67 +1,248 @@
 import argparse
+import random
+import time
 
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.init as init
 import torch.optim as optim
-import torch.utils.data
+from torch.utils.data import Dataloader, ConcatDataSet, Subset
 import numpy as np
+import torch.nn.functional as F
+from nltk.metrics.distance import edit_distance
 
-from model import Model
+from model import MyModel
 from collections import namedtuple
+from utils import CTCLabelConverter, AttnLabelConverter, Averager
+# from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
 
-def args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--experiment_name', help='Where to store logs and models')
-    # parser.add_argument('--train_data', required=True, help='path to training dataset')
-    # parser.add_argument('--valid_data', required=True, help='path to validation dataset')
-    parser.add_argument('--manualSeed', type=int, default=1111, help='for random seed setting')
-    parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-    parser.add_argument('--batch_size', type=int, default=192, help='input batch size')
-    parser.add_argument('--num_iter', type=int, default=300000, help='number of iterations to train for')
-    parser.add_argument('--valInterval', type=int, default=2000, help='Interval between each validation')
-    parser.add_argument('--saved_model', default='', help="path to model to continue training")
-    parser.add_argument('--FT', action='store_true', help='whether to do fine-tuning')
-    parser.add_argument('--adam', action='store_true', help='Whether to use adam (default is Adadelta)')
-    parser.add_argument('--lr', type=float, default=1, help='learning rate, default=1.0 for Adadelta')
-    parser.add_argument('--beta1', type=float, default=0.9, help='beta1 for adam. default=0.9')
-    parser.add_argument('--rho', type=float, default=0.95, help='decay rate rho for Adadelta. default=0.95')
-    parser.add_argument('--eps', type=float, default=1e-8, help='eps for Adadelta. default=1e-8')
-    parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping value. default=5')
-    """ Data processing """
-    parser.add_argument('--select_data', type=str, default='MJ-ST',
-                        help='select training data (default is MJ-ST, which means MJ and ST used as training data)')
-    parser.add_argument('--batch_ratio', type=str, default='0.5-0.5',
-                        help='assign ratio for each selected data in the batch')
-    parser.add_argument('--total_data_usage_ratio', type=str, default='1.0',
-                        help='total data usage ratio, this ratio is multiplied to total number of data.')
-    parser.add_argument('--batch_max_length', type=int, default=25, help='maximum-label-length')
-    parser.add_argument('--imgH', type=int, default=32, help='the height of the input image')
-    parser.add_argument('--imgW', type=int, default=100, help='the width of the input image')
-    parser.add_argument('--rgb', action='store_true', help='use rgb input')
-    parser.add_argument('--character', type=str, default='0123456789abcdefghijklmnopqrstuvwxyz', help='character label')
-    parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')
-    parser.add_argument('--PAD', action='store_true', help='whether to keep ratio then pad for image resize')
-    parser.add_argument('--data_filtering_off', action='store_true', help='for data_filtering_off mode')
-    """ Model Architecture """
-    parser.add_argument('--Transformation', type=str, default="None", required=True, help='Transformation stage. None|TPS')
-    parser.add_argument('--FeatureExtraction', type=str, default="CRNN", required=True, help='FeatureExtraction stage. CRNN|VGG|RCNN|ResNet')
-    parser.add_argument('--SequenceModeling', type=str, required=True, help='SequenceModeling stage. None|BiLSTM')
-    parser.add_argument('--Prediction', type=str, required=True, help='Prediction stage. CTC|Attn')
-    parser.add_argument('--num_fiducial', type=int, default=20, help='number of fiducial points of TPS-STN')
-    parser.add_argument('--input_channel', type=int, default=1, help='the number of input channel of Feature extractor')
-    parser.add_argument('--output_channel', type=int, default=512,
-                        help='the number of output channel of Feature extractor')
-    parser.add_argument('--hidden_size', type=int, default=256, help='the size of the LSTM hidden state')
+from data.my_dataset import MyLmdbDataset
 
-    opt = parser.parse_args()
 
-    return opt
-
+def get_all_characters():
+    provinces = ["京", "津", "冀", "晋", "蒙", "辽", "吉", "黑", "沪",
+                 "苏", "浙", "皖", "闽", "赣", "鲁", "豫", "鄂", "湘",
+                 "粤", "桂", "琼", "渝", "川", "贵", "云", "藏", "陕",
+                 "甘", "青", "宁", "新"]
+    all_characters = "".join(provinces) + "#abcdefghjklmnpqrstuvwxyz0123456789警港澳学领使挂"
+    return all_characters
 
 
 def get_model():
+    arch_dict = {
+        "trans": None,
+        "feat": "CRNN",
+        "seq": "BILSTM",
+        "head": "CTC"
+    }
+    feat_dict = {
+        "input_c": 3,
+        "output_c": 512
+    }
+    bilstm_dict = {
+        "hidden_size": 512,
+    }
+    head_dict = {
+        "num_classes": 74,  # CTC+1, Attn+2?
+    }
+    model = MyModel(arch_dict, feat_dict=feat_dict, bilstm_dict=bilstm_dict, head_dict=head_dict)
 
-    config = 
+    # weight initialization
+    for name, param in model.named_parameters():
+        if 'localization_fc2' in name:
+            print(f'Skip {name} as it is already initialized')
+            continue
+        try:
+            if 'bias' in name:
+                init.constant_(param, 0.0)
+            elif 'weight' in name:
+                init.kaiming_normal_(param)
+        except Exception as e:  # for batchnorm.
+            if 'weight' in name:
+                param.data.fill_(1)
+            continue
 
-    model = Model()
+    filtered_parameters = []
+    params_num = []
+    for p in filter(lambda p: p.requires_grad, model.parameters()):
+        filtered_parameters.append(p)
+        params_num.append(np.prod(p.size()))
+    print('Trainable params num : ', sum(params_num))
+    [print(name, p.numel()) for name, p in
+     filter(lambda p: p[1].requires_grad, model.named_parameters())]
+
+    return model, filtered_parameters
+
+
+def get_dataloader(dataset, is_train, batch_size=128, num_workers=16):
+    dataloader = Dataloader(
+        dataset, batch_size=batch_size, shuffle=is_train, num_workers=num_workers,
+        pin_memory=is_train, drop_last=is_train
+    )
+    return dataloader
+
+
+def main():
+    base_lr = 1e-1
+    experiment_name = ""
+    save_root = ""
+
+    model, train_parameters = get_model()
+    optimizer = torch.optim.Adam(train_parameters, lr=base_lr, betas=(0., 0.999))
+    scheduler = None
+    criterion = torch.nn.CTCLoss(zero_infinity=True).cuda()
+    all_characters = get_all_characters()
+    converter = CTCLabelConverter(all_characters)
+
+    val_dataset = MyLmdbDataset(
+        root="/home/dl/liyunfei/project/rec_lmdb_dataset/test_db",
+        db_name="cennavi_v1",
+        max_length=100,
+        all_characters=all_characters,
+        input_c=3, input_h=32, input_w=160,
+        mean=.5, std=.5,
+        do_trans=False
+    )
+    val_dataloader = get_dataloader(val_dataset, False, batch_size=32, num_workers=8)
+
+    loss_avg = Averager()
+    start_time = time.time()
+    best_accuracy = -1
+    best_ned = 1e+6
+
+    epochs = 200
+    for epoch in range(epochs):
+        train_loss = train(model, optimizer, scheduler, criterion, converter)
+        valid_loss, current_accuracy, current_ned, preds, labels, infer_time, length_of_data = \
+            val(model, criterion, val_dataloader, converter)
+        elapsed_time = time.time() - start_time
+        print(f'end one epoch --> [{epoch}/{epochs}] train Loss: {train_loss:0.5f} elapsed_time: {elapsed_time:0.5f}')
+
+        for pred, gt in zip(preds[:5], labels[:5]):
+            print(f'{pred:20s}, gt: {gt:20s},   {str(pred == gt)}')
+        valid_log = f'[{epoch}/{epochs}] valid loss: {valid_loss:0.5f}'
+        valid_log += f' accuracy: {current_accuracy:0.3f}, norm_ED: {current_ned:0.2f}'
+        print(valid_log)
+
+        if current_accuracy > best_accuracy:
+            best_accuracy = current_accuracy
+            torch.save(model.state_dict(), f'./saved_models/{experiment_name}/best_accuracy.pth')
+        if current_ned < best_ned:
+            best_ned = current_ned
+            torch.save(model.state_dict(), f'./saved_models/{experiment_name}/best_norm_ED.pth')
+        best_model_log = f'best_accuracy: {best_accuracy:0.3f}, best_norm_ED: {best_ned:0.2f}'
+        print(best_model_log)
+
+        net_save_path = f"{save_root}/experiment_name-{epoch}-{valid_loss:.4f}.p"
+        state = {
+            'epoch': epoch,
+            'state_dict': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'scheduler': scheduler.state_dict(),
+            # 'config': CONFIG,
+            'loss': loss_avg.val(),
+        }
+        torch.save(state, net_save_path)
+
+
+def train(model, optimizer, scheduler, criterion, converter):
+    all_characters = get_all_characters()
+    batch_size = 128
+    num_workers = 16
+    grad_clip = 5.
+    input_w, input_h, input_c = 160, 32, 3
+    mean, std = 0.5, 0.5
+
+    model.train()
+
+    dataset_synth = MyLmdbDataset(
+        "/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db", "synth_v1",
+        10, all_characters, input_w, input_h, input_c, mean, std, do_trans=True
+    )  # 20w
+
+    dataset_ccpd = MyLmdbDataset(
+        "/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db", "ccpd",
+        10, all_characters, input_w, input_h, input_c, mean, std, do_trans=True
+    )  # 35w
+    dataset_synth = Subset(dataset_synth, random.choices(range(0, dataset_synth.num_samples), k=100000))
+    dataset_ccpd = Subset(dataset_ccpd, random.choices(range(0, dataset_ccpd.num_samples), k=200000))
+    dataset = ConcatDataSet([dataset_ccpd, dataset_synth])
+    dataloader = get_dataloader(dataset, True, batch_size=batch_size, num_workers=num_workers)
+
+    loss_avg = Averager()
+    for i, (input_batch, label_batch) in enumerate(dataloader):
+        input_batch = input_batch.cuda()
+        label_index, label_length = converter.encode(label_batch)
+
+        pred_score_map = model(input_batch)
+        pred_score_map = F.log_softmax(pred_score_map, dim=2)
+        _, pred_index = pred_score_map.max(dim=2)
+
+        device = pred_score_map.device
+        pred_length = torch.LongTensor([pred_length.size(1)] * pred_score_map.size(0)).to(device)
+        label_index = label_index.long().to(device)
+        label_length = label_length.long().to(device)
+        loss = criterion(pred_score_map, label_index, pred_length, label_length)
+
+        model.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        optimizer.step()
+
+        loss_avg.add(loss.data)
+        if i % 20 == 0:
+            print(f"[{i}/{len(dataloader)}], loss: {loss_avg.val()}")
+            loss_avg.reset()
+    return loss_avg.val()
+
+
+def val(model, criterion, dataloader, converter):
+    batch_max_length = 10
+
+    model.eval()
+
+    n_correct = 0
+    ned = 0
+    length_of_data = 0
+    infer_time = 0
+    valid_loss_avg = Averager()
+    with torch.no_grad():
+        for i, (input_batch, label_batch) in enumerate(dataloader):
+            batch_size = input_batch.size(0)
+            length_of_data = length_of_data + batch_size
+            input_batch = input_batch.cuda()
+
+            # length_for_pred = torch.IntTensor([batch_max_length] * batch_size).cuda()
+            # text_for_pred = torch.LongTensor(batch_size, batch_max_length + 1).fill_(0).cuda()
+
+            text_for_loss, length_for_loss = converter.encode(label_batch, batch_max_length=batch_max_length)
+            start_time = time.time()
+            preds = model(input_batch, None).log_softmax(2)
+            forward_time = time.time() - start_time
+
+            # Calculate evaluation loss for CTC deocder.
+            preds_size = torch.IntTensor([preds.size(1)] * batch_size)
+            preds = preds.permute(1, 0, 2)  # to use CTCloss format
+            cost = criterion(preds, text_for_loss, preds_size, length_for_loss)
+
+            # Select max probabilty (greedy decoding) then decode index to character
+            _, preds_index = preds.max(2)
+            preds_index = preds_index.transpose(1, 0).contiguous().view(-1)
+            preds_str = converter.decode(preds_index.data, preds_size.data)
+
+            infer_time += forward_time
+            valid_loss_avg.add(cost)
+
+            # calculate accuracy.
+            for pred, gt in zip(preds_str, label_batch):
+                if pred == gt:
+                    n_correct += 1
+                if len(gt) == 0:
+                    ned += 1
+                else:
+                    ned += edit_distance(pred, gt) / len(gt)
+    accuracy = n_correct / float(length_of_data) * 100
+    return valid_loss_avg.val(), accuracy, ned, preds_str, label_batch, infer_time, length_of_data
+
+if __name__ == "__main__":
+    main()
