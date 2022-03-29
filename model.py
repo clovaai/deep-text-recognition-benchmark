@@ -153,7 +153,7 @@ class MyModel(nn.Module):
 
     def forward(self, input, text, is_train=True, max_length=10):
         """ Transformation stage """
-        if not self.arch_dict['Trans'] == "None":
+        if not self.arch_dict['trans'] == "None":
             input = self.Transformation(input)
 
         """ Feature extraction stage """
@@ -162,13 +162,13 @@ class MyModel(nn.Module):
         visual_feature = visual_feature.squeeze(3)
 
         """ Sequence modeling stage """
-        if self.arch_dict['Seq'] == 'BiLSTM':
+        if self.arch_dict['seq'] == 'BiLSTM':
             contextual_feature = self.SequenceModeling(visual_feature)
         else:
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
 
         """ Prediction stage """
-        if self.arch_dict['Pred'] == 'CTC':
+        if self.arch_dict['head'] == 'CTC':
             prediction = self.Prediction(contextual_feature.contiguous())
         else:
             prediction = self.Prediction(contextual_feature.contiguous(), text, is_train, batch_max_length=max_length)

@@ -1,6 +1,3 @@
-import torch
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 class CTCLabelConverter(object):
     """ Convert between text-label and text-index """
@@ -16,7 +13,7 @@ class CTCLabelConverter(object):
 
         self.character = ['[blank]'] + dict_character  # dummy '[blank]' token for CTCLoss (index 0)
 
-    def encode(self, text, batch_max_length=25):
+    def encode(self, text_batch, batch_max_length=25):
         """convert text-label into text-index.
         input:
             text: text labels of each image. [batch_size]
@@ -26,11 +23,12 @@ class CTCLabelConverter(object):
                     [sum(text_lengths)] = [text_index_0 + text_index_1 + ... + text_index_(n - 1)]
             length: length of each text. [batch_size]
         """
-        length = [len(s) for s in text]
-        text = ''.join(text)
-        text = [self.dict[char] for char in text]
+        text_batch = [text[:batch_max_length] for text in text_batch]
 
-        return (torch.IntTensor(text), torch.IntTensor(length))
+        length_batch = [len(text) for text in text_batch]
+        text = ''.join(text_batch)
+        text = [self.dict[char] for char in text]
+        return text, length_batch
 
     def decode(self, text_index, length):
         """ convert text-index into text-label. """
@@ -65,7 +63,7 @@ class AttnLabelConverter(object):
             # print(i, char)
             self.dict[char] = i
 
-    def encode(self, text, batch_max_length=25):
+    def encode(self, text_batch, batch_max_length=25):
         """ convert text-label into text-index.
         input:
             text: text labels of each image. [batch_size]
@@ -76,17 +74,18 @@ class AttnLabelConverter(object):
                 text[:, 0] is [GO] token and text is padded with [GO] token after [s] token.
             length : the length of output of attention decoder, which count [s] token also. [3, 7, ....] [batch_size]
         """
-        length = [len(s) + 1 for s in text]  # +1 for [s] at end of sentence.
+        batch_size = len(text_batch)
+        length = [len(s) + 1 for s in text_batch]  # +1 for [s] at end of sentence.
         # batch_max_length = max(length) # this is not allowed for multi-gpu setting
         batch_max_length += 1
         # additional +1 for [GO] at first step. batch_text is padded with [GO] token after [s] token.
-        batch_text = torch.LongTensor(len(text), batch_max_length + 1).fill_(0)
-        for i, t in enumerate(text):
+        res = [0 for _ in range(batch_max_length + 1)] * len(batch_size)
+        for i, t in enumerate(text_batch):
             text = list(t)
             text.append('[s]')
             text = [self.dict[char] for char in text]
-            batch_text[i][1:1 + len(text)] = torch.LongTensor(text)  # batch_text[:, 0] = [GO] token
-        return (batch_text.to(device), torch.IntTensor(length).to(device))
+            res[i][1:1 + len(text)] = text  # batch_text[:, 0] = [GO] token
+        return res, length
 
     def decode(self, text_index, length):
         """ convert text-index into text-label. """
@@ -118,3 +117,4 @@ class Averager(object):
         if self.n_count != 0:
             res = self.sum / float(self.n_count)
         return res
+

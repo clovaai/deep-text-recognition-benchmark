@@ -14,7 +14,7 @@ from .augmentation import random_blur, random_flat
 
 class MyLmdbDataset(Dataset):
 
-    def __init__(self, root, db_name, max_length, all_characters, input_w, input_h, input_c, mean, std, do_trans: bool):
+    def __init__(self, root, db_name, max_length, all_characters, input_w, input_h, input_c, mean, std, sensitive, do_trans: bool):
         """ lmdb 数据集，生成 rec 用的数据
 
         Args:
@@ -24,6 +24,7 @@ class MyLmdbDataset(Dataset):
             all_characters (str): 支持的字符集
             input_w, input_h, input_c (int): 输入分辨率
             mean, std (float): 均值和方差(0-1之间)
+            sensitive (bool): 英文大小写是否敏感, 如果否, 全部使用 upper
             do_trans (bool): 是否做数据增强(训练集需要做)
         """
 
@@ -33,14 +34,14 @@ class MyLmdbDataset(Dataset):
         self.all_characters = all_characters
         self.mean, self.std =  mean, std,
         self.input_c, self.input_w, self.input_h = input_c, input_w, input_h
+        self.sensitive = sensitive
         self.do_trans = do_trans
         
         self.env = lmdb.open(root, max_dbs=1, max_readers=32, readonly=True, 
                              lock=False, readahead=False, meminit=False)
         self.db = self.env.open_db(db_name.encode("utf8"))
         if not self.env:
-            print('cannot create lmdb from %s' % (root))
-            sys.exit(0)
+            raise IOError(f"cannot create lmdb from {root}")
 
         with self.env.begin(write=False) as txn:
             num_samples = int(txn.get('num-samples'.encode("utf8"), db=self.db).decode("utf8"))
@@ -59,9 +60,8 @@ class MyLmdbDataset(Dataset):
                 # By default, images containing characters which are not in opt.character are filtered.
                 # You can add [UNK] token to `opt.character` in utils.py instead of this filtering.
                 out_of_char = f'[^{self.all_characters}]'
-                if re.search(out_of_char, label.lower()):
-                    print(f'There are invalided characters in: {label} in\
-                        dataset {self.root}: {self.db_name}: {label_key}')
+                if re.search(out_of_char, label):
+                    print(f'There are invalided characters in: {label} in dataset {self.root}: {self.db_name}: {label_key}')
                     continue
 
                 self.filtered_index_list.append(index)
@@ -78,6 +78,8 @@ class MyLmdbDataset(Dataset):
             # text label
             label_key = 'label-%d'.encode('utf-8') % index
             label = txn.get(label_key, db=self.db).decode('utf-8')
+            if not self.sensitive:
+                label = label.upper()
             # image
             img_key = 'image-%d'.encode('utf-8') % index
             np_byte_encode = txn.get(img_key, db=self.db) 

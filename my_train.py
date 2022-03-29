@@ -1,36 +1,32 @@
-import argparse
+import os
 import random
 import time
 
-import torch
-import torch.backends.cudnn as cudnn
-import torch.nn.init as init
-import torch.optim as optim
-from torch.utils.data import Dataloader, ConcatDataSet, Subset
 import numpy as np
+import torch
 import torch.nn.functional as F
+import torch.nn.init as init
 from nltk.metrics.distance import edit_distance
-
-from model import MyModel
-from collections import namedtuple
-from utils import CTCLabelConverter, AttnLabelConverter, Averager
-# from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
+from torch.utils.data import DataLoader, ConcatDataset, Subset
 
 from data.my_dataset import MyLmdbDataset
+from model import MyModel
+from utils import CTCLabelConverter, Averager
 
 
-def get_all_characters():
+def get_all_characters(sensitive=True):
     provinces = ["京", "津", "冀", "晋", "蒙", "辽", "吉", "黑", "沪",
                  "苏", "浙", "皖", "闽", "赣", "鲁", "豫", "鄂", "湘",
                  "粤", "桂", "琼", "渝", "川", "贵", "云", "藏", "陕",
                  "甘", "青", "宁", "新"]
     all_characters = "".join(provinces) + "#abcdefghjklmnpqrstuvwxyz0123456789警港澳学领使挂"
+    if sensitive: all_characters = all_characters.upper()
     return all_characters
 
 
 def get_model():
     arch_dict = {
-        "trans": None,
+        "trans": "None",
         "feat": "CRNN",
         "seq": "BILSTM",
         "head": "CTC"
@@ -75,7 +71,7 @@ def get_model():
 
 
 def get_dataloader(dataset, is_train, batch_size=128, num_workers=16):
-    dataloader = Dataloader(
+    dataloader = DataLoader(
         dataset, batch_size=batch_size, shuffle=is_train, num_workers=num_workers,
         pin_memory=is_train, drop_last=is_train
     )
@@ -84,11 +80,14 @@ def get_dataloader(dataset, is_train, batch_size=128, num_workers=16):
 
 def main():
     base_lr = 1e-1
-    experiment_name = ""
-    save_root = ""
+    experiment_name = "baseline"
+    save_root = "./output"
+    save_path = os.path.join(save_root, experiment_name)
+    os.makedirs(os.path.join(save_root, experiment_name), exist_ok=True)
 
     model, train_parameters = get_model()
-    optimizer = torch.optim.Adam(train_parameters, lr=base_lr, betas=(0., 0.999))
+    model.cuda()
+    optimizer = torch.optim.Adam(train_parameters, lr=base_lr, betas=(0.9, 0.999))
     scheduler = None
     criterion = torch.nn.CTCLoss(zero_infinity=True).cuda()
     all_characters = get_all_characters()
@@ -101,22 +100,24 @@ def main():
         all_characters=all_characters,
         input_c=3, input_h=32, input_w=160,
         mean=.5, std=.5,
+        sensitive=True,
         do_trans=False
     )
     val_dataloader = get_dataloader(val_dataset, False, batch_size=32, num_workers=8)
 
     loss_avg = Averager()
-    start_time = time.time()
     best_accuracy = -1
     best_ned = 1e+6
 
     epochs = 200
     for epoch in range(epochs):
+        start_time = time.time()
         train_loss = train(model, optimizer, scheduler, criterion, converter)
+        elapsed_time = time.time() - start_time
+        print(f'--> [{epoch}/{epochs}] train Loss: {train_loss:0.5f} elapsed_time: {elapsed_time:0.2f} s')
+
         valid_loss, current_accuracy, current_ned, preds, labels, infer_time, length_of_data = \
             val(model, criterion, val_dataloader, converter)
-        elapsed_time = time.time() - start_time
-        print(f'end one epoch --> [{epoch}/{epochs}] train Loss: {train_loss:0.5f} elapsed_time: {elapsed_time:0.5f}')
 
         for pred, gt in zip(preds[:5], labels[:5]):
             print(f'{pred:20s}, gt: {gt:20s},   {str(pred == gt)}')
@@ -126,23 +127,23 @@ def main():
 
         if current_accuracy > best_accuracy:
             best_accuracy = current_accuracy
-            torch.save(model.state_dict(), f'./saved_models/{experiment_name}/best_accuracy.pth')
+            torch.save(model.state_dict(), f'{save_path}/best_accuracy_{best_accuracy:.4f}.pth')
         if current_ned < best_ned:
             best_ned = current_ned
-            torch.save(model.state_dict(), f'./saved_models/{experiment_name}/best_norm_ED.pth')
+            torch.save(model.state_dict(), f'{save_path}/best_ned_{best_ned:.4f}.pth')
         best_model_log = f'best_accuracy: {best_accuracy:0.3f}, best_norm_ED: {best_ned:0.2f}'
         print(best_model_log)
 
-        net_save_path = f"{save_root}/experiment_name-{epoch}-{valid_loss:.4f}.p"
+        state_save_path = os.path.join(save_path, "{epoch}-{valid_loss:.4f}.pth")
         state = {
             'epoch': epoch,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
-            'scheduler': scheduler.state_dict(),
+            # 'scheduler': scheduler.state_dict(),
             # 'config': CONFIG,
             'loss': loss_avg.val(),
         }
-        torch.save(state, net_save_path)
+        torch.save(state, state_save_path)
 
 
 def train(model, optimizer, scheduler, criterion, converter):
@@ -152,36 +153,43 @@ def train(model, optimizer, scheduler, criterion, converter):
     grad_clip = 5.
     input_w, input_h, input_c = 160, 32, 3
     mean, std = 0.5, 0.5
+    batch_max_length = 10
 
     model.train()
 
     dataset_synth = MyLmdbDataset(
         "/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db", "synth_v1",
-        10, all_characters, input_w, input_h, input_c, mean, std, do_trans=True
+        10, all_characters, input_w, input_h, input_c, mean, std, True, do_trans=True
     )  # 20w
 
     dataset_ccpd = MyLmdbDataset(
         "/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db", "ccpd",
-        10, all_characters, input_w, input_h, input_c, mean, std, do_trans=True
+        10, all_characters, input_w, input_h, input_c, mean, std, True, do_trans=True
     )  # 35w
     dataset_synth = Subset(dataset_synth, random.choices(range(0, dataset_synth.num_samples), k=100000))
-    dataset_ccpd = Subset(dataset_ccpd, random.choices(range(0, dataset_ccpd.num_samples), k=200000))
-    dataset = ConcatDataSet([dataset_ccpd, dataset_synth])
+    dataset_ccpd = Subset(dataset_ccpd, random.choices(range(0, dataset_ccpd.num_samples), k=2000))
+    dataset = ConcatDataset([dataset_ccpd, dataset_synth])
     dataloader = get_dataloader(dataset, True, batch_size=batch_size, num_workers=num_workers)
 
     loss_avg = Averager()
     for i, (input_batch, label_batch) in enumerate(dataloader):
         input_batch = input_batch.cuda()
-        label_index, label_length = converter.encode(label_batch)
+        # label_index: [total_words_of_this_batch, ] each is index of one word
+        # label_length: [batch_size, ], each is length of one sample
+        label_index, label_length = converter.encode(label_batch, batch_max_length)
 
-        pred_score_map = model(input_batch)
+        pred_score_map = model(input_batch, None)
         pred_score_map = F.log_softmax(pred_score_map, dim=2)
         _, pred_index = pred_score_map.max(dim=2)
 
         device = pred_score_map.device
-        pred_length = torch.LongTensor([pred_length.size(1)] * pred_score_map.size(0)).to(device)
-        label_index = label_index.long().to(device)
-        label_length = label_length.long().to(device)
+        pred_seq_length = pred_score_map.size(1)
+        batch_size = pred_score_map.size(0)
+        pred_length = torch.LongTensor(batch_size).fill_(pred_seq_length).to(device)
+        label_index = torch.LongTensor(label_index).to(device)
+        label_length = torch.LongTensor(label_length).to(device)
+
+        pred_score_map = pred_score_map.permute(1, 0, 2)  # to use CTCLoss format， [N, L, C] --> [L, N, C]
         loss = criterion(pred_score_map, label_index, pred_length, label_length)
 
         model.zero_grad()
@@ -215,26 +223,31 @@ def val(model, criterion, dataloader, converter):
             # length_for_pred = torch.IntTensor([batch_max_length] * batch_size).cuda()
             # text_for_pred = torch.LongTensor(batch_size, batch_max_length + 1).fill_(0).cuda()
 
-            text_for_loss, length_for_loss = converter.encode(label_batch, batch_max_length=batch_max_length)
+            label_index, label_length = converter.encode(label_batch, batch_max_length=batch_max_length)
             start_time = time.time()
-            preds = model(input_batch, None).log_softmax(2)
+            pred_probability = model(input_batch, None).log_softmax(2)
             forward_time = time.time() - start_time
 
-            # Calculate evaluation loss for CTC deocder.
-            preds_size = torch.IntTensor([preds.size(1)] * batch_size)
-            preds = preds.permute(1, 0, 2)  # to use CTCloss format
-            cost = criterion(preds, text_for_loss, preds_size, length_for_loss)
+            device = pred_probability.device
+            pred_seq_length = pred_probability.size(1)
+            batch_size = pred_probability.size(0)
+            pred_length = torch.LongTensor(batch_size).fill_(pred_seq_length).to(device)
+            label_index = torch.LongTensor(label_index).to(device)
+            label_length = torch.LongTensor(label_length).to(device)
+
+            pred_probability = pred_probability.permute(1, 0, 2)  # to use CTCloss format
+            cost = criterion(pred_probability, label_index, pred_length, label_length)
 
             # Select max probabilty (greedy decoding) then decode index to character
-            _, preds_index = preds.max(2)
-            preds_index = preds_index.transpose(1, 0).contiguous().view(-1)
-            preds_str = converter.decode(preds_index.data, preds_size.data)
+            _, pred_index = pred_probability.max(2)
+            pred_index = pred_index.transpose(1, 0).contiguous().view(-1)
+            pred_text = converter.decode(pred_index.data, pred_length.data)
 
             infer_time += forward_time
             valid_loss_avg.add(cost)
 
             # calculate accuracy.
-            for pred, gt in zip(preds_str, label_batch):
+            for pred, gt in zip(pred_text, label_batch):
                 if pred == gt:
                     n_correct += 1
                 if len(gt) == 0:
@@ -242,7 +255,8 @@ def val(model, criterion, dataloader, converter):
                 else:
                     ned += edit_distance(pred, gt) / len(gt)
     accuracy = n_correct / float(length_of_data) * 100
-    return valid_loss_avg.val(), accuracy, ned, preds_str, label_batch, infer_time, length_of_data
+    return valid_loss_avg.val(), accuracy, ned, pred_text, label_batch, infer_time, length_of_data
+
 
 if __name__ == "__main__":
     main()
