@@ -99,7 +99,7 @@ class MyLmdbDataset(Dataset):
                     img = random_flat(img, 0.7, 1.33)
                 if random.random() < 0.2:
                     img = random_blur(img, random.randint(1, 3))
-                if random.random() < 0.3: # 0.3:
+                if random.random() < 0.7: # 0.3:
                     img = T.ColorJitter(brightness=0.4, contrast=0.4)(img)
                 img = np.asarray(img)
                 

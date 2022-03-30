@@ -118,3 +118,36 @@ class Averager(object):
             res = self.sum / float(self.n_count)
         return res
 
+
+def get_char_acc(pred, label, ignore_char="#"):
+    correct_count = 0
+    total_count   = 0
+    min_len = min(len(pred), len(label))
+    for i in range(min_len):
+        pred_c, gt_c = pred[i], label[i]
+        if gt_c != ignore_char:
+            total_count += 1
+            if pred_c == gt_c:
+                correct_count += 1  
+    for c in label[min_len:]:
+        total_count += 1        # 可以识别错误，但不能不识别
+    for c in pred[min_len:]:
+        total_count += 1
+    
+    if total_count == 0:
+        return 1
+    else:
+        return correct_count / total_count
+    
+
+def get_line_acc(pred, label, ignore_char="#"):
+    if pred == label: return 1
+    if len(pred) != len(label): return 0
+    for pred_c, gt_c in zip(pred, label):
+        if (pred_c != gt_c) and (gt_c != ignore_char):
+            return 0
+    return 1
+
+
+if __name__ == "__main__":
+    print(get_line_acc("labex", "#a####"))

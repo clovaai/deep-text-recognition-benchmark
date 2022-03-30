@@ -134,7 +134,8 @@ class MyModel(nn.Module):
             hidden_size = kwargs["bilstm_dict"]["hidden_size"]
             self.SequenceModeling = nn.Sequential(
                 BidirectionalLSTM(self.FeatureExtraction_output, hidden_size, hidden_size),
-                BidirectionalLSTM(hidden_size, hidden_size, hidden_size))
+                BidirectionalLSTM(hidden_size, hidden_size, hidden_size)
+            )
             self.SequenceModeling_output = hidden_size
         else:
             print('No SequenceModeling module specified')
@@ -162,7 +163,7 @@ class MyModel(nn.Module):
         visual_feature = visual_feature.squeeze(3)
 
         """ Sequence modeling stage """
-        if self.arch_dict['seq'] == 'BiLSTM':
+        if self.arch_dict['seq'] == 'BILSTM':
             contextual_feature = self.SequenceModeling(visual_feature)
         else:
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
