@@ -24,7 +24,7 @@ def get_all_characters(sensitive=True):
     return all_characters
 
 
-def get_model():
+def get_model(ckpt_file="", fine_tune=False):
     arch_dict = {
         "trans": "None",
         "feat": "CRNN",
@@ -58,6 +58,13 @@ def get_model():
                 param.data.fill_(1)
             continue
 
+    if ckpt_file:
+        print(f"load weight from {ckpt_file}")
+        model.load_state_dict(
+            torch.load(ckpt_file, map_location="cpu"),
+            strict=False if fine_tune else True
+        )
+
     filtered_parameters = []
     params_num = []
     for p in filter(lambda p: p.requires_grad, model.parameters()):
@@ -73,24 +80,26 @@ def get_model():
 def get_dataloader(dataset, is_train, batch_size=128, num_workers=16):
     dataloader = DataLoader(
         dataset, batch_size=batch_size, shuffle=is_train, num_workers=num_workers,
-        pin_memory=is_train, drop_last=is_train
+        pin_memory=is_train, drop_last=False
     )
     return dataloader
 
 
 def main():
+    load_weight_path = "./output/baseline/pth/best_char_acc_84.7117-epoch:178.pth"
     base_lr = 1e-1
-    experiment_name = "baseline"
+    experiment_name = "v1:baseline+D_cennavi_v1"
     save_root = "./output"
     save_path = os.path.join(save_root, experiment_name)
     os.makedirs(os.path.join(save_root, experiment_name), exist_ok=True)
 
-    model, train_parameters = get_model()
+    model, train_parameters = get_model(load_weight_path)
     model.cuda()
     optimizer = torch.optim.Adadelta(train_parameters, lr=base_lr, rho=0.95, eps=1e-8)
     # optimizer = torch.optim.Adam(train_parameters, lr=base_lr, betas=(0.9, 0.999))
     scheduler = None
     criterion = torch.nn.CTCLoss(zero_infinity=True).cuda()
+
     all_characters = get_all_characters()
     converter = CTCLabelConverter(all_characters)
 
@@ -98,49 +107,27 @@ def main():
         root="/home/dl/liyunfei/project/rec_lmdb_dataset/test_db",
         db_name="cennavi_v1",
         max_length=100,
-        all_characters=all_characters,
+        all_characters=all_characters.replace("#", ""), # remove unclear image.
         input_c=3, input_h=32, input_w=160,
         mean=.5, std=.5,
         sensitive=True,
         do_trans=False
     )
     val_dataloader = get_dataloader(val_dataset, False, batch_size=32, num_workers=2)
-    
-    val_dataset1 = MyLmdbDataset(
-        root="/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db",
-        db_name="ccpd",
-        max_length=100,
-        all_characters=all_characters,
-        input_c=3, input_h=32, input_w=160,
-        mean=.5, std=.5,
-        sensitive=True,
-        do_trans=False
-    )
-    val_dataset1 = Subset(val_dataset1, list(range(1000)))
-    val_dataloader1 = get_dataloader(val_dataset1, False, batch_size=32, num_workers=2)
 
     loss_avg = Averager()
     best_line_acc = -1
     best_char_acc = -1
     best_ned = 1e+6
 
-    epochs = 200
+    epochs = 40
     for epoch in range(epochs):
         start_time = time.time()
         train_loss = train(model, optimizer, scheduler, criterion, converter)
         elapsed_time = time.time() - start_time
         print(f'--> [{epoch}/{epochs}] train Loss: {train_loss:0.5f} elapsed_time: {elapsed_time:0.2f} s')
 
-        print(f"now is trainset...")
-        valid_loss, current_line_acc, current_char_acc, current_ned, preds, labels, infer_time, length_of_data = \
-            val(model, criterion, val_dataloader1, converter)
-        for pred, gt in zip(preds[:5], labels[:5]):
-            print(f'{pred:20s}, gt: {gt:20s},   {str(pred == gt)}')
-        valid_log = f'[{epoch}/{epochs}] valid loss: {valid_loss:0.5f}'
-        valid_log += f' current_line_acc: {current_line_acc:0.3f}, current_char_acc: {current_char_acc:0.3f}, current_ned: {current_ned:0.2f}'
-        print(valid_log)
-        
-        print(f"now is real testset.")
+        print(f"now is real test dataset.")
         valid_loss, current_line_acc, current_char_acc, current_ned, preds, labels, infer_time, length_of_data = \
             val(model, criterion, val_dataloader, converter)
         for pred, gt in zip(preds[:20], labels[:20]):
@@ -191,9 +178,15 @@ def train(model, optimizer, scheduler, criterion, converter):
         "/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db", "ccpd",
         10, all_characters, input_w, input_h, input_c, mean, std, True, do_trans=True
     )  # 35w
-    dataset_synth = Subset(dataset_synth, random.choices(range(0, dataset_synth.num_samples), k=100000))
-    dataset_ccpd = Subset(dataset_ccpd, random.choices(range(0, dataset_ccpd.num_samples), k=200000))
-    dataset = ConcatDataset([dataset_ccpd, dataset_synth])
+
+    all_characters = all_characters.replace("#", "")    # remove unclear sample, "#"
+    dataset_cennavi_v1 = MyLmdbDataset(
+        "/home/dl/liyunfei/project/rec_lmdb_dataset/train_val_db", "cennavi_v1",
+        10, all_characters, input_w, input_h, input_c, mean, std, True, do_trans=True
+    )  # 35w
+    dataset_synth = Subset(dataset_synth, random.choices(range(0, dataset_synth.num_samples), k=1000))
+    dataset_ccpd = Subset(dataset_ccpd, random.choices(range(0, dataset_ccpd.num_samples), k=2000))
+    dataset = ConcatDataset([dataset_ccpd, dataset_synth, dataset_cennavi_v1])
     dataloader = get_dataloader(dataset, True, batch_size=batch_size, num_workers=num_workers)
 
     loss_avg = Averager()
@@ -287,4 +280,5 @@ def val(model, criterion, dataloader, converter):
 
 
 if __name__ == "__main__":
+    os.environ["CUDA_VISIBLE_DEVICES"]="1"
     main()
