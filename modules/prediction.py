@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from .transformers import position_enccoding as sinosial_positional_encoding
+from .transformers import TransformerDecoderLayer
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -79,3 +81,63 @@ class AttentionCell(nn.Module):
         concat_context = torch.cat([context, char_onehots], 1)  # batch_size x (num_channel + num_embedding)
         cur_hidden = self.rnn(concat_context, prev_hidden)
         return cur_hidden, alpha
+
+class PositionalEmbedding(nn.Module):
+    def __init__(self, learnable: bool, num_embeddings: int, embedding_dim: int) -> None:
+        super().__init__()
+        if learnable:
+            self.embeddings = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=embedding_dim)
+        else:
+            self.embeddings = sinosial_positional_encoding()
+            raise NotImplementedError
+
+    def forward(self, position_ids):
+        position_embeddings = self.embeddings(position_ids)
+        return position_embeddings
+
+
+class TransformerDecoder(nn.Module):
+    def __init__(
+            self, learnable_embeddings: bool,
+            num_output: int, seq_length: int, embedding_dim: int,
+            num_layers: int = 6, dim_model: int = 512,
+            num_heads: int = 8, dim_feedforward: int = 2048,
+            dropout: float = 0.1, device: torch.device=torch.device("cpu")
+        ) -> None:
+        super().__init__()
+        self.device = device
+        self.position_embeddings = PositionalEmbedding(learnable_embeddings, num_embeddings=seq_length, embedding_dim=embedding_dim)
+        self.word_embeddings = nn.Embedding(num_embeddings=seq_length, embedding_dim=embedding_dim)
+
+        self.layers = nn.ModuleList(
+            [
+                TransformerDecoderLayer(dim_model, num_heads, dim_feedforward, dropout)
+                for _ in range(num_layers)
+            ]
+        )
+        self.linear = nn.Linear(in_features=256,out_features=num_output)
+        self.learnable_embeddings = learnable_embeddings
+        self.dim_model = dim_model
+
+    def forward(self, input_ids: torch.Tensor, encoded_memory: torch.Tensor):
+        input_shape = input_ids.shape
+        seq_length = input_shape[1]
+
+        if self.learnable_embeddings:
+            position_ids = torch.arange(seq_length, dtype=torch.long, device=self.device)
+            position_ids = position_ids.unsqueeze(0).expand(input_shape)
+            positional_embeddings = self.position_embeddings(position_ids)
+        else:
+            positional_embeddings = sinosial_positional_encoding(seq_len=seq_length, dim_model=self.dim_model)
+
+        input_embeddings = self.word_embeddings(input_ids)
+
+        input_embeddings += positional_embeddings
+
+        for layer in self.layers:
+            input_embeddings = layer(input_embeddings, encoded_memory)
+        
+        output = self.linear(input_embeddings)
+        return output
+        # print(f'finished layer, {input_embeddings.shape = }')
+        # return torch.softmax(self.linear(input_embeddings), dim=-1)

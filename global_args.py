@@ -1,6 +1,6 @@
 import argparse
 import string
-def get_cfgs():
+def get_cfgs(string_arg: list[str]=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp_name', help='Where to store logs and models')
     parser.add_argument('--train_data', help='path to training dataset')
@@ -54,8 +54,10 @@ def get_cfgs():
     parser.add_argument('--benchmark_all_eval', action='store_true', help='evaluate 10 benchmark evaluation datasets')
 
 
-
-    opt = parser.parse_args()
+    if string_arg is not None:
+        opt = parser.parse_args(string_arg)
+    else:
+        opt = parser.parse_args()
 
 
     """ vocab / character number configuration """

@@ -19,10 +19,11 @@ import torch.nn as nn
 from modules.transformation import TPS_SpatialTransformerNetwork
 from modules.feature_extraction import VGG_FeatureExtractor, RCNN_FeatureExtractor, ResNet_FeatureExtractor
 from modules.sequence_modeling import BidirectionalLSTM
-from modules.prediction import Attention
+from modules.prediction import Attention, TransformerDecoder
 from utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
 import torch.nn.init as init
 import torch
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Model(nn.Module):
 
@@ -66,10 +67,17 @@ class Model(nn.Module):
             self.Prediction = nn.Linear(self.SequenceModeling_output, opt.num_class)
         elif opt.Prediction == 'Attn':
             self.Prediction = Attention(self.SequenceModeling_output, opt.hidden_size, opt.num_class)
+        elif opt.Prediction == 'TransformerDecoder':
+            # seq_length + 2 to include <start> and <end> characters
+            self.Prediction = TransformerDecoder(
+                learnable_embeddings=True, num_output=opt.num_class, seq_length = opt.batch_max_length + 2,
+                embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output
+            )
         else:
             raise Exception('Prediction is neither CTC or Attn')
 
     def forward(self, input, text, is_train=True):
+        batch_size = input.shape[0]
         """ Transformation stage """
         if not self.stages['Trans'] == "None":
             input = self.Transformation(input)
@@ -85,9 +93,17 @@ class Model(nn.Module):
         else:
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
 
+        print(f'{contextual_feature.shape = }')
+
         """ Prediction stage """
-        if self.stages['Pred'] == 'CTC':
+        if self.stages['Pred'] in ['CTC']:
             prediction = self.Prediction(contextual_feature.contiguous())
+        elif self.stages['Pred'] in ['TransformerDecoder']:
+            # target_tensor = torch.Tensor(
+            #     [[0] * self.opt.batch_max_length for _ in range(batch_size)]
+            # ).int()
+            target_tensor = text
+            prediction = self.Prediction(target_tensor, contextual_feature.contiguous())
         else:
             prediction = self.Prediction(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.batch_max_length)
 
