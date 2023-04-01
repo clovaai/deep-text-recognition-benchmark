@@ -93,7 +93,7 @@ class Model(nn.Module):
         else:
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
 
-        print(f'{contextual_feature.shape = }')
+        # print(f'{contextual_feature.shape = }')
 
         """ Prediction stage """
         if self.stages['Pred'] in ['CTC']:

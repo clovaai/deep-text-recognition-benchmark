@@ -115,7 +115,7 @@ class TransformerDecoder(nn.Module):
                 for _ in range(num_layers)
             ]
         )
-        self.linear = nn.Linear(in_features=256,out_features=num_output)
+        self.linear = nn.Linear(in_features=embedding_dim,out_features=num_output)
         self.learnable_embeddings = learnable_embeddings
         self.dim_model = dim_model
 
