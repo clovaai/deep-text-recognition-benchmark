@@ -34,7 +34,9 @@ def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: 
         # q_k = q_k * mask
         batch_size = q_k.shape[0]
         index = (mask == 0).repeat(batch_size, 1, 1)
-        q_k[index] = -float('inf')
+        q_k[index] = -1e9#-float('inf')
+        # print(f'{F.softmax(q_k, dim=-1) = }')
+        # raise Exception
 
     # softmax (above)
     softmax = F.softmax(q_k, dim=-1)
@@ -73,7 +75,7 @@ class MultiHeadAttention(nn.Module):
         )
 
 def position_enccoding(
-    seq_len: int, dim_model: int, device: torch.device = torch.device("cpu")
+    seq_len: int, dim_model: int, device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ) -> torch.Tensor:
     """_summary_
 
@@ -82,7 +84,7 @@ def position_enccoding(
     Args:
         seq_len (int): _description_
         dim_model (int): _description_
-        device (torch.device, optional): _description_. Defaults to torch.device("cpu").
+        device (torch.device, optional): _description_. Defaults to torch.device("cuda" if torch.cuda.is_available() else "cpu").
 
     Returns:
         torch.Tensor: _description_

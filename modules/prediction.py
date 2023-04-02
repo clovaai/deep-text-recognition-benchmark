@@ -102,7 +102,7 @@ class TransformerDecoder(nn.Module):
             num_output: int, seq_length: int, embedding_dim: int,
             num_layers: int = 6, dim_model: int = 512,
             num_heads: int = 8, dim_feedforward: int = 2048,
-            dropout: float = 0.1, device: torch.device=torch.device("cpu")
+            dropout: float = 0.1, device: torch.device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
         ) -> None:
         super().__init__()
         self.device = device
