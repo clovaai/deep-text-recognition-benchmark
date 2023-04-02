@@ -48,6 +48,7 @@ def get_cfgs(string_arg: list[str]=None):
     parser.add_argument('--output_channel', type=int, default=512,
                         help='the number of output channel of Feature extractor')
     parser.add_argument('--hidden_size', type=int, default=256, help='the size of the LSTM hidden state')
+    parser.add_argument('--decoder_layers', type=int, default=6, help='the number of layers for transformers model')
 
     # For testing
     parser.add_argument('--eval_data', type=str, default="", help='path to evaluation dataset')

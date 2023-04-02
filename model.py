@@ -71,7 +71,8 @@ class Model(nn.Module):
             # seq_length + 2 to include <start> and <end> characters
             self.Prediction = TransformerDecoder(
                 learnable_embeddings=True, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
-                embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output
+                embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output,
+                num_layers=opt.decoder_layers
             )
         else:
             raise Exception('Prediction is neither CTC or Attn')
