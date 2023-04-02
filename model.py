@@ -102,8 +102,12 @@ class Model(nn.Module):
             # target_tensor = torch.Tensor(
             #     [[0] * self.opt.batch_max_length for _ in range(batch_size)]
             # ).int()
+            if is_train:
+                mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length)
+            else:
+                mask = None
             target_tensor = text
-            prediction = self.Prediction(target_tensor, contextual_feature.contiguous())
+            prediction = self.Prediction(target_tensor, contextual_feature.contiguous(), mask)
         else:
             prediction = self.Prediction(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.batch_max_length)
 

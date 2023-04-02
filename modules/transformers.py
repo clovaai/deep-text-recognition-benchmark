@@ -6,7 +6,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> torch.Tensor:
+def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
     """_summary_
     https://miro.medium.com/v2/resize:fit:720/format:webp/1*BzhKcJJxv974OxWOVqUuQQ.png
 
@@ -19,10 +19,16 @@ def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: 
         torch.Tensor: _description_
     """
     # MatMul( Q * K ^ T)
-    q_k = torch.bmm(query, key.transpose(1, 2))
+    q_k: torch.Tensor = torch.bmm(query, key.transpose(1, 2))
     # Scale # (divide above by sqrt(dk))
     scale = query.size(-1) ** 0.5
     q_k /= scale
+
+    # mask
+    if mask is not None:
+        # q_k = q_k.masked_fill(mask=mask, value=float('-inf'))
+        q_k = q_k * mask
+
     # softmax (above)
     softmax = F.softmax(q_k, dim=-1)
     # MatMul (softmax res * V)
@@ -43,8 +49,8 @@ class AttentionHead(nn.Module):
         self.k = nn.Linear(dim_in, dim_k)
         self.v = nn.Linear(dim_in, dim_k)
 
-    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> torch.Tensor:
-        return scaled_dot_product_attention(self.q(query), self.k(key), self.v(value))
+    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
+        return scaled_dot_product_attention(self.q(query), self.k(key), self.v(value), mask)
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, num_heads: int, dim_in: int, dim_q: int, dim_k: int):
@@ -54,9 +60,9 @@ class MultiHeadAttention(nn.Module):
         )
         self.linear = nn.Linear(num_heads * dim_k, dim_in)
 
-    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> torch.Tensor:
+    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
         return self.linear(
-            torch.cat([head(query, key, value) for head in self.heads], dim=-1)
+            torch.cat([head(query, key, value, mask) for head in self.heads], dim=-1)
         )
 
 def position_enccoding(
@@ -176,9 +182,9 @@ class TransformerDecoderLayer(nn.Module):
             dropout,
         )
 
-    def forward(self, tgt: torch.Tensor, memory: torch.Tensor) -> torch.Tensor:
-        tgt = self.attention_1(tgt, tgt, tgt)
-        tgt = self.attention_2(tgt, memory, memory)
+    def forward(self, tgt: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
+        tgt = self.attention_1(tgt, tgt, tgt, mask)
+        tgt = self.attention_2(tgt, memory, memory, mask)
         return self.feed_forward(tgt)
     
 class TransformerDecoder(nn.Module):
@@ -199,11 +205,11 @@ class TransformerDecoder(nn.Module):
         )
         self.linear = nn.Linear(dim_model, dim_model)
 
-    def forward(self, tgt: torch.Tensor, memory: torch.Tensor) -> torch.Tensor:
+    def forward(self, tgt: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
         seq_len, dimension = tgt.size(1), tgt.size(2)
         tgt += position_enccoding(seq_len, dimension)
         for layer in self.layers:
-            tgt = layer(tgt, memory)
+            tgt = layer(tgt, memory, mask)
         
         return torch.softmax(self.linear(tgt), dim=-1)
 

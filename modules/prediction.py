@@ -119,7 +119,7 @@ class TransformerDecoder(nn.Module):
         self.learnable_embeddings = learnable_embeddings
         self.dim_model = dim_model
 
-    def forward(self, input_ids: torch.Tensor, encoded_memory: torch.Tensor):
+    def forward(self, input_ids: torch.Tensor, encoded_memory: torch.Tensor, mask: torch.Tensor=None):
         input_shape = input_ids.shape
         seq_length = input_shape[1]
 
@@ -135,9 +135,14 @@ class TransformerDecoder(nn.Module):
         input_embeddings += positional_embeddings
 
         for layer in self.layers:
-            input_embeddings = layer(input_embeddings, encoded_memory)
+            input_embeddings = layer(input_embeddings, encoded_memory, mask)
         
         output = self.linear(input_embeddings)
         return output
         # print(f'finished layer, {input_embeddings.shape = }')
         # return torch.softmax(self.linear(input_embeddings), dim=-1)
+
+    def generate_attn_mask(self, seq_len: int):
+        mask = torch.tril(torch.ones(seq_len, seq_len))
+        mask[mask == 0] = -float('inf')
+        return mask
