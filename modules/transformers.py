@@ -19,7 +19,8 @@ def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: 
         torch.Tensor: _description_
     """
     # MatMul( Q * K ^ T)
-    q_k: torch.Tensor = torch.bmm(query, key.transpose(1, 2))
+    # q_k: torch.Tensor = torch.bmm(query, key.transpose(1, 2))
+    q_k: torch.Tensor = torch.matmul(query, key.transpose(1, 2))
     # Scale # (divide above by sqrt(dk))
     scale = query.size(-1) ** 0.5
     q_k /= scale
@@ -27,7 +28,13 @@ def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: 
     # mask
     if mask is not None:
         # q_k = q_k.masked_fill(mask=mask, value=float('-inf'))
-        q_k = q_k * mask
+        # print(f'{q_k.shape = }')
+        # print(f'{q_k = }')
+        # raise Exception
+        # q_k = q_k * mask
+        batch_size = q_k.shape[0]
+        index = (mask == 0).repeat(batch_size, 1, 1)
+        q_k[index] = -float('inf')
 
     # softmax (above)
     softmax = F.softmax(q_k, dim=-1)
@@ -183,8 +190,13 @@ class TransformerDecoderLayer(nn.Module):
         )
 
     def forward(self, tgt: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
+        # print(f'{tgt.shape = }, {mask.shape = }, {memory.shape = }')
+        # print(f'starting first attention')
         tgt = self.attention_1(tgt, tgt, tgt, mask)
-        tgt = self.attention_2(tgt, memory, memory, mask)
+        # print(f'finished first attention')
+        # print(f'{tgt.shape = }, {mask.shape = }, {memory.shape = }')
+        tgt = self.attention_2(tgt, memory, memory)
+        # print(f'finished second attention')
         return self.feed_forward(tgt)
     
 class TransformerDecoder(nn.Module):

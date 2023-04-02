@@ -144,5 +144,5 @@ class TransformerDecoder(nn.Module):
 
     def generate_attn_mask(self, seq_len: int):
         mask = torch.tril(torch.ones(seq_len, seq_len))
-        mask[mask == 0] = -float('inf')
+        mask = mask.unsqueeze(0)
         return mask

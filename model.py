@@ -70,7 +70,7 @@ class Model(nn.Module):
         elif opt.Prediction == 'TransformerDecoder':
             # seq_length + 2 to include <start> and <end> characters
             self.Prediction = TransformerDecoder(
-                learnable_embeddings=True, num_output=opt.num_class, seq_length = opt.batch_max_length + 2,
+                learnable_embeddings=True, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
                 embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output
             )
         else:
@@ -103,7 +103,8 @@ class Model(nn.Module):
             #     [[0] * self.opt.batch_max_length for _ in range(batch_size)]
             # ).int()
             if is_train:
-                mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length)
+                # + 1 because it'll be first text.... <EOS>
+                mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length + 1)
             else:
                 mask = None
             target_tensor = text
