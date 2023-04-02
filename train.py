@@ -165,7 +165,7 @@ def train(opt):
                 head = f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F'
                 predicted_result_log = f'{dashed_line}\n{head}\n{dashed_line}\n'
                 for gt, pred, confidence in zip(labels[:5], preds[:5], confidence_score[:5]):
-                    if 'Attn' in opt.Prediction:
+                    if opt.Prediction in ['Attn', 'TransformerDecoder']:
                         gt = gt[:gt.find('[s]')]
                         pred = pred[:pred.find('[s]')]
 
