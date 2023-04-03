@@ -69,9 +69,17 @@ class Model(nn.Module):
             self.Prediction = Attention(self.SequenceModeling_output, opt.hidden_size, opt.num_class)
         elif opt.Prediction == 'TransformerDecoder':
             # seq_length + 2 to include <start> and <end> characters
-            self.Prediction = TransformerDecoder(
-                learnable_embeddings=opt.learnable_pos_embeddings, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
-                embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output,
+            # self.Prediction = TransformerDecoder(
+            #     learnable_embeddings=opt.learnable_pos_embeddings, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
+            #     embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output,
+            #     num_layers=opt.decoder_layers
+            # )
+
+            self.Prediction = nn.TransformerDecoder(
+                decoder_layer= nn.TransformerDecoderLayer(
+                    d_model=self.SequenceModeling_output, nhead=6,
+                    batch_first=True
+                ), 
                 num_layers=opt.decoder_layers
             )
         else:
@@ -94,7 +102,7 @@ class Model(nn.Module):
         else:
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
 
-        print(f'{contextual_feature.shape = }')
+        # print(f'{contextual_feature.shape = }')
 
         """ Prediction stage """
         if self.stages['Pred'] in ['CTC']:
@@ -156,7 +164,7 @@ def load_model(opt):
     model.train()
     if opt.saved_model != '':
         print(f'loading pretrained model from {opt.saved_model}')
-        state_dict = torch.load(opt.saved_model, map_location=torch.device('cpu'))
+        state_dict = torch.load(opt.saved_model, map_location=device)
         if opt.FT:
             last_layer_params = [
                 "module.Prediction.generator.weight",

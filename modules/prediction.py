@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .transformers import position_enccoding as sinosial_positional_encoding
 from .transformers import TransformerDecoderLayer
+import math
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -82,6 +83,27 @@ class AttentionCell(nn.Module):
         cur_hidden = self.rnn(concat_context, prev_hidden)
         return cur_hidden, alpha
 
+class SinPositionalEncoding(nn.Module):
+
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            x: Tensor, shape [seq_len, batch_size, embedding_dim]
+        """
+        return self.pe[:x.size(0)]
+        return self.dropout(x)
+
 class PositionalEmbedding(nn.Module):
     def __init__(self, learnable: bool, num_embeddings: int, embedding_dim: int) -> None:
         super().__init__()
@@ -103,7 +125,10 @@ class TransformerDecoder(nn.Module):
         ) -> None:
         super().__init__()
         self.device = device
-        self.position_embeddings = PositionalEmbedding(learnable_embeddings, num_embeddings=seq_length, embedding_dim=embedding_dim)
+        if learnable_embeddings:
+            self.position_embeddings = PositionalEmbedding(learnable_embeddings, num_embeddings=seq_length, embedding_dim=embedding_dim)
+        else:
+            self.position_embeddings = SinPositionalEncoding(d_model=dim_model, max_len=seq_length)
         self.word_embeddings = nn.Embedding(num_embeddings=num_output, embedding_dim=embedding_dim)
 
         self.layers = nn.ModuleList(
@@ -130,7 +155,8 @@ class TransformerDecoder(nn.Module):
             position_ids = position_ids.unsqueeze(0).expand(input_shape)
             positional_embeddings = self.position_embeddings(position_ids)
         else:
-            positional_embeddings = sinosial_positional_encoding(seq_len=seq_length, dim_model=self.dim_model)
+            positional_embeddings = self.position_embeddings(input_ids)
+            # positional_embeddings = sinosial_positional_encoding(seq_len=seq_length, dim_model=self.dim_model)
 
         input_embeddings = self.word_embeddings(input_ids)
 
@@ -151,6 +177,6 @@ class TransformerDecoder(nn.Module):
         if type(self.layers[0]) is nn.TransformerDecoderLayer:
             return nn.Transformer.generate_square_subsequent_mask(seq_len, device=device)
         else:
-            mask = torch.tril(torch.ones(seq_len, seq_len), device=device)
+            mask = torch.tril(torch.ones(seq_len, seq_len))
             # mask = mask.unsqueeze(0)
             return mask
