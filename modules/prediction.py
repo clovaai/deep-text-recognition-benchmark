@@ -108,12 +108,12 @@ class TransformerDecoder(nn.Module):
 
         self.layers = nn.ModuleList(
             [
-                # TransformerDecoderLayer(dim_model, num_heads, dim_feedforward, dropout)
-                nn.TransformerDecoderLayer(
-                    d_model=dim_model, nhead=num_heads, 
-                    dim_feedforward=dim_feedforward, dropout=dropout,
-                    batch_first=True
-                )
+                TransformerDecoderLayer(dim_model, num_heads, dim_feedforward, dropout)
+                # nn.TransformerDecoderLayer(
+                #     d_model=dim_model, nhead=num_heads, 
+                #     dim_feedforward=dim_feedforward, dropout=dropout,
+                #     batch_first=True
+                # )
                 for _ in range(num_layers)
             ]
         )
@@ -147,8 +147,10 @@ class TransformerDecoder(nn.Module):
         # print(f'finished layer, {input_embeddings.shape = }')
         # return torch.softmax(self.linear(input_embeddings), dim=-1)
 
-    def generate_attn_mask(self, seq_len: int):
-        return nn.Transformer.generate_square_subsequent_mask(seq_len)
-        mask = torch.tril(torch.ones(seq_len, seq_len))
-        # mask = mask.unsqueeze(0)
-        return mask
+    def generate_attn_mask(self, seq_len: int, device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")):
+        if type(self.layers[0]) is nn.TransformerDecoderLayer:
+            return nn.Transformer.generate_square_subsequent_mask(seq_len, device=device)
+        else:
+            mask = torch.tril(torch.ones(seq_len, seq_len), device=device)
+            # mask = mask.unsqueeze(0)
+            return mask
