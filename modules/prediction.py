@@ -135,6 +135,7 @@ class TransformerDecoder(nn.Module):
             input_embeddings = layer(input_embeddings, encoded_memory, mask)
         
         output = self.linear(input_embeddings)
+        output = torch.softmax(output, dim=-1)
         return output
         # print(f'finished layer, {input_embeddings.shape = }')
         # return torch.softmax(self.linear(input_embeddings), dim=-1)

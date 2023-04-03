@@ -155,7 +155,7 @@ def load_model(opt):
     model.train()
     if opt.saved_model != '':
         print(f'loading pretrained model from {opt.saved_model}')
-        state_dict = torch.load(opt.saved_model)
+        state_dict = torch.load(opt.saved_model, map_location=torch.device('cpu'))
         if opt.FT:
             last_layer_params = [
                 "module.Prediction.generator.weight",
