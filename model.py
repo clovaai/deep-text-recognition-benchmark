@@ -77,7 +77,7 @@ class Model(nn.Module):
 
             self.Prediction = nn.TransformerDecoder(
                 decoder_layer= nn.TransformerDecoderLayer(
-                    d_model=self.SequenceModeling_output, nhead=6,
+                    d_model=self.SequenceModeling_output, nhead=4,
                     batch_first=True
                 ), 
                 num_layers=opt.decoder_layers
