@@ -108,7 +108,8 @@ class TransformerDecoder(nn.Module):
 
         self.layers = nn.ModuleList(
             [
-                TransformerDecoderLayer(dim_model, num_heads, dim_feedforward, dropout)
+                # TransformerDecoderLayer(dim_model, num_heads, dim_feedforward, dropout)
+                nn.TransformerDecoderLayer(d_model=dim_model, nhead=num_heads, dim_feedforward=dim_feedforward, dropout=dropout)
                 for _ in range(num_layers)
             ]
         )
