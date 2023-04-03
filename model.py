@@ -70,7 +70,7 @@ class Model(nn.Module):
         elif opt.Prediction == 'TransformerDecoder':
             # seq_length + 2 to include <start> and <end> characters
             self.Prediction = TransformerDecoder(
-                learnable_embeddings=True, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
+                learnable_embeddings=opt.learnable_pos_embeddings, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
                 embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output,
                 num_layers=opt.decoder_layers
             )

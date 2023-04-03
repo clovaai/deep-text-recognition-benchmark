@@ -49,6 +49,7 @@ def get_cfgs(string_arg: list[str]=None):
                         help='the number of output channel of Feature extractor')
     parser.add_argument('--hidden_size', type=int, default=256, help='the size of the LSTM hidden state')
     parser.add_argument('--decoder_layers', type=int, default=6, help='the number of layers for transformers model')
+    parser.add_argument('--learnable_pos_embeddings', action='store_true', help='whether to use learnable positional embeddings')
 
     # For testing
     parser.add_argument('--eval_data', type=str, default="", help='path to evaluation dataset')

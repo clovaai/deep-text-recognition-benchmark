@@ -41,7 +41,8 @@ def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: 
     # softmax (above)
     softmax = F.softmax(q_k, dim=-1)
     # MatMul (softmax res * V)
-    result = torch.bmm(softmax, value)
+    # result = torch.bmm(softmax, value)
+    result = torch.matmul(softmax, value)
     return result
 
 class AttentionHead(nn.Module):

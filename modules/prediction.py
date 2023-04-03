@@ -85,11 +85,7 @@ class AttentionCell(nn.Module):
 class PositionalEmbedding(nn.Module):
     def __init__(self, learnable: bool, num_embeddings: int, embedding_dim: int) -> None:
         super().__init__()
-        if learnable:
-            self.embeddings = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=embedding_dim)
-        else:
-            self.embeddings = sinosial_positional_encoding()
-            raise NotImplementedError
+        self.embeddings = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=embedding_dim)
 
     def forward(self, position_ids):
         position_embeddings = self.embeddings(position_ids)
@@ -100,6 +96,7 @@ class TransformerDecoder(nn.Module):
     def __init__(
             self, learnable_embeddings: bool,
             num_output: int, seq_length: int, embedding_dim: int,
+            # num_chars: int, 
             num_layers: int = 6, dim_model: int = 512,
             num_heads: int = 8, dim_feedforward: int = 2048,
             dropout: float = 0.1, device: torch.device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -107,7 +104,7 @@ class TransformerDecoder(nn.Module):
         super().__init__()
         self.device = device
         self.position_embeddings = PositionalEmbedding(learnable_embeddings, num_embeddings=seq_length, embedding_dim=embedding_dim)
-        self.word_embeddings = nn.Embedding(num_embeddings=seq_length, embedding_dim=embedding_dim)
+        self.word_embeddings = nn.Embedding(num_embeddings=num_output, embedding_dim=embedding_dim)
 
         self.layers = nn.ModuleList(
             [
