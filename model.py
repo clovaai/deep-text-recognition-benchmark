@@ -94,7 +94,7 @@ class Model(nn.Module):
         else:
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
 
-        # print(f'{contextual_feature.shape = }')
+        print(f'{contextual_feature.shape = }')
 
         """ Prediction stage """
         if self.stages['Pred'] in ['CTC']:
@@ -108,6 +108,7 @@ class Model(nn.Module):
                 mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length + 1)
             else:
                 mask = None
+            # mask = torch.ones((1,1))
             target_tensor = text
             prediction = self.Prediction(target_tensor, contextual_feature.contiguous(), mask)
         else:

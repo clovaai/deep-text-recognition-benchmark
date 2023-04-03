@@ -109,7 +109,11 @@ class TransformerDecoder(nn.Module):
         self.layers = nn.ModuleList(
             [
                 # TransformerDecoderLayer(dim_model, num_heads, dim_feedforward, dropout)
-                nn.TransformerDecoderLayer(d_model=dim_model, nhead=num_heads, dim_feedforward=dim_feedforward, dropout=dropout)
+                nn.TransformerDecoderLayer(
+                    d_model=dim_model, nhead=num_heads, 
+                    dim_feedforward=dim_feedforward, dropout=dropout,
+                    batch_first=True
+                )
                 for _ in range(num_layers)
             ]
         )
@@ -132,8 +136,10 @@ class TransformerDecoder(nn.Module):
 
         input_embeddings += positional_embeddings
 
+        # print(f'starting first decoder layer {input_embeddings.shape = }')
         for layer in self.layers:
             input_embeddings = layer(input_embeddings, encoded_memory, mask)
+            # print(f'going next decoder layer')
         
         output = self.linear(input_embeddings)
         output = torch.softmax(output, dim=-1)
@@ -142,6 +148,7 @@ class TransformerDecoder(nn.Module):
         # return torch.softmax(self.linear(input_embeddings), dim=-1)
 
     def generate_attn_mask(self, seq_len: int):
+        return nn.Transformer.generate_square_subsequent_mask(seq_len)
         mask = torch.tril(torch.ones(seq_len, seq_len))
-        mask = mask.unsqueeze(0)
+        # mask = mask.unsqueeze(0)
         return mask
