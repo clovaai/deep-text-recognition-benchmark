@@ -114,6 +114,29 @@ class PositionalEmbedding(nn.Module):
         return position_embeddings
 
 
+class TorchDecoderWrapper(nn.Module):
+    def __init__(self, 
+                d_model: int, num_layers: int,
+                num_output: int, embedding_dim: int
+            ) -> None:
+        super().__init__()
+        self.model = nn.TransformerDecoder(
+            decoder_layer= nn.TransformerDecoderLayer(
+                d_model=d_model, nhead=4,
+                batch_first=True
+            ), 
+            num_layers=num_layers
+        )
+        self.word_embeddings = nn.Embedding(num_embeddings=num_output, embedding_dim=embedding_dim)
+        self.linear = nn.Linear(in_features=embedding_dim,out_features=num_output)
+
+    def forward(self, text: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
+        text_embed = self.word_embeddings(text)
+        decoder_out = self.model(text_embed, memory, tgt_mask=mask)
+        class_out = self.linear(decoder_out)
+        class_probs = torch.softmax(class_out, dim=-1)
+        return class_probs
+
 class TransformerDecoder(nn.Module):
     def __init__(
             self, learnable_embeddings: bool,

@@ -19,7 +19,7 @@ import torch.nn as nn
 from modules.transformation import TPS_SpatialTransformerNetwork
 from modules.feature_extraction import VGG_FeatureExtractor, RCNN_FeatureExtractor, ResNet_FeatureExtractor
 from modules.sequence_modeling import BidirectionalLSTM
-from modules.prediction import Attention, TransformerDecoder
+from modules.prediction import Attention, TransformerDecoder, TorchDecoderWrapper
 from utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
 import torch.nn.init as init
 import torch
@@ -75,13 +75,11 @@ class Model(nn.Module):
             #     num_layers=opt.decoder_layers
             # )
 
-            self.Prediction = nn.TransformerDecoder(
-                decoder_layer= nn.TransformerDecoderLayer(
-                    d_model=self.SequenceModeling_output, nhead=4,
-                    batch_first=True
-                ), 
-                num_layers=opt.decoder_layers
+            self.Prediction = TorchDecoderWrapper(
+                d_model=self.SequenceModeling_output, num_layers=opt.decoder_layers,
+                num_output=opt.num_class, embedding_dim=opt.hidden_size
             )
+
         else:
             raise Exception('Prediction is neither CTC or Attn')
 
@@ -102,7 +100,7 @@ class Model(nn.Module):
         else:
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
 
-        # print(f'{contextual_feature.shape = }')
+        print(f'{contextual_feature.shape = }')
 
         """ Prediction stage """
         if self.stages['Pred'] in ['CTC']:
@@ -111,14 +109,16 @@ class Model(nn.Module):
             # target_tensor = torch.Tensor(
             #     [[0] * self.opt.batch_max_length for _ in range(batch_size)]
             # ).int()
-            if is_train:
-                # + 1 because it'll be first text.... <EOS>
-                mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length + 1)
-            else:
-                mask = None
+            # if is_train:
+            #     # + 1 because it'll be first text.... <EOS>
+            #     mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length + 1)
+            # else:
+            #     mask = None
+            mask=None
             # mask = torch.ones((1,1))
             target_tensor = text
             prediction = self.Prediction(target_tensor, contextual_feature.contiguous(), mask)
+            # prediction = self.Prediction(contextual_feature.contiguous(), target_tensor, mask)
         else:
             prediction = self.Prediction(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.batch_max_length)
 
