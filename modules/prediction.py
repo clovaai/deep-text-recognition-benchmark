@@ -85,24 +85,33 @@ class AttentionCell(nn.Module):
 
 class SinPositionalEncoding(nn.Module):
 
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000, batch_first: bool = True):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
 
         position = torch.arange(max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-        pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term)
-        pe[:, 0, 1::2] = torch.cos(position * div_term)
+        if not batch_first:
+            pe = torch.zeros(max_len, 1, d_model)
+            pe[:, 0, 0::2] = torch.sin(position * div_term)
+            pe[:, 0, 1::2] = torch.cos(position * div_term)
+        else:
+            pe = torch.zeros(max_len, d_model)
+            pe[:, 0::2] = torch.sin(position * div_term)
+            pe[:, 1::2] = torch.cos(position * div_term)
+        self.batch_first = batch_first
         self.register_buffer('pe', pe)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            x: Tensor, shape [seq_len, batch_size, embedding_dim]
+            x: Tensor, shape [batch_size, seq_len, embedding_dim]
         """
-        return self.pe[:x.size(0)]
-        return self.dropout(x)
+        if self.batch_first:
+            return self.pe[:x.size(1)]
+        else:
+            return self.pe[:x.size(0)]
+        #return self.dropout(x)
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, learnable: bool, num_embeddings: int, embedding_dim: int) -> None:
@@ -117,7 +126,8 @@ class PositionalEmbedding(nn.Module):
 class TorchDecoderWrapper(nn.Module):
     def __init__(self, 
                 d_model: int, num_layers: int,
-                num_output: int, embedding_dim: int
+                num_output: int, embedding_dim: int,
+                seq_length: int
             ) -> None:
         super().__init__()
         self.model = nn.TransformerDecoder(
@@ -129,9 +139,14 @@ class TorchDecoderWrapper(nn.Module):
         )
         self.word_embeddings = nn.Embedding(num_embeddings=num_output, embedding_dim=embedding_dim)
         self.linear = nn.Linear(in_features=embedding_dim,out_features=num_output)
+        self.seq_length = seq_length
+        self.position_embeddings = SinPositionalEncoding(d_model=d_model, max_len=seq_length)
 
     def forward(self, text: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
         text_embed = self.word_embeddings(text)
+        positional_embeddings = self.position_embeddings(text)
+        # print(f'{positional_embeddings.shape = }, {text_embed.shape = }')
+        text_embed += positional_embeddings
         decoder_out = self.model(text_embed, memory, tgt_mask=mask)
         class_out = self.linear(decoder_out)
         class_probs = torch.softmax(class_out, dim=-1)
