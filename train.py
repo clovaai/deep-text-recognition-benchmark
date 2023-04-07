@@ -119,10 +119,9 @@ def train(opt):
                 cost = criterion(preds, text, preds_size, length)
         
         elif 'TransformerDecoder' in opt.Prediction:
-            preds = model(image, text[:, :-1])  # align with Attention.forward
+            preds: torch.Tensor = model(image, text[:, :-1])  # align with Attention.forward
             target = text[:, 1:]  # without [GO] Symbol
-            bs, sl, wc = preds.shape
-            cost = criterion(preds.view(bs, wc, sl), target)
+            cost = criterion(preds.permute(0, 2, 1), target)
 
         else:
             preds = model(image, text[:, :-1])  # align with Attention.forward

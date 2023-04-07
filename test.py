@@ -125,7 +125,10 @@ def validation(model, criterion, evaluation_loader, converter, opt):
 
             preds = preds[:, :text_for_loss.shape[1] - 1, :]
             target = text_for_loss[:, 1:]  # without [GO] Symbol
-            cost = criterion(preds.contiguous().view(-1, preds.shape[-1]), target.contiguous().view(-1))
+            if 'Attn' in opt.Prediction:
+                cost = criterion(preds.contiguous().view(-1, preds.shape[-1]), target.contiguous().view(-1))
+            else:
+                cost = criterion(preds.permute(0, 2, 1), target)
 
             # select max probabilty (greedy decoding) then decode index to character
             _, preds_index = preds.max(2)
