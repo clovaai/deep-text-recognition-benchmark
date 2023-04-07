@@ -69,17 +69,19 @@ class Model(nn.Module):
             self.Prediction = Attention(self.SequenceModeling_output, opt.hidden_size, opt.num_class)
         elif opt.Prediction == 'TransformerDecoder':
             # seq_length + 2 to include <start> and <end> characters
-            # self.Prediction = TransformerDecoder(
-            #     learnable_embeddings=opt.learnable_pos_embeddings, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
-            #     embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output,
-            #     num_layers=opt.decoder_layers
-            # )
+            if opt.use_torch_transformer:
+                self.Prediction = TorchDecoderWrapper(
+                    d_model=self.SequenceModeling_output, num_layers=opt.decoder_layers,
+                    num_output=opt.num_class, embedding_dim=opt.hidden_size,
+                    seq_length=opt.batch_max_length + 1
+                )
+            else:
+                self.Prediction = TransformerDecoder(
+                    learnable_embeddings=opt.learnable_pos_embeddings, num_output=opt.num_class, seq_length = opt.batch_max_length + 1,
+                    embedding_dim=opt.hidden_size, dim_model=self.SequenceModeling_output,
+                    num_layers=opt.decoder_layers
+                )
 
-            self.Prediction = TorchDecoderWrapper(
-                d_model=self.SequenceModeling_output, num_layers=opt.decoder_layers,
-                num_output=opt.num_class, embedding_dim=opt.hidden_size,
-                seq_length=opt.batch_max_length + 1
-            )
 
         else:
             raise Exception('Prediction is neither CTC or Attn')
