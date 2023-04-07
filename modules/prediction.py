@@ -118,7 +118,9 @@ class PositionalEmbedding(nn.Module):
         super().__init__()
         self.embeddings = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=embedding_dim)
 
-    def forward(self, position_ids):
+    def forward(self, x: torch.Tensor):
+        position_ids = torch.arange(x.shape[1], dtype=torch.long, device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+        position_ids = position_ids.unsqueeze(0).expand(x.shape)
         position_embeddings = self.embeddings(position_ids)
         return position_embeddings
 
@@ -141,6 +143,7 @@ class TorchDecoderWrapper(nn.Module):
         self.linear = nn.Linear(in_features=embedding_dim,out_features=num_output)
         self.seq_length = seq_length
         self.position_embeddings = SinPositionalEncoding(d_model=d_model, max_len=seq_length)
+        self.position_embeddings = PositionalEmbedding(learnable=True, num_embeddings=seq_length, embedding_dim=d_model)
 
     def forward(self, text: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
         text_embed = self.word_embeddings(text)
@@ -188,13 +191,7 @@ class TransformerDecoder(nn.Module):
         input_shape = input_ids.shape
         seq_length = input_shape[1]
 
-        if self.learnable_embeddings:
-            position_ids = torch.arange(seq_length, dtype=torch.long, device=self.device)
-            position_ids = position_ids.unsqueeze(0).expand(input_shape)
-            positional_embeddings = self.position_embeddings(position_ids)
-        else:
-            positional_embeddings = self.position_embeddings(input_ids)
-            # positional_embeddings = sinosial_positional_encoding(seq_len=seq_length, dim_model=self.dim_model)
+        positional_embeddings = self.position_embeddings(input_ids)
 
         input_embeddings = self.word_embeddings(input_ids)
 
@@ -206,7 +203,7 @@ class TransformerDecoder(nn.Module):
             # print(f'going next decoder layer')
         
         output = self.linear(input_embeddings)
-        output = torch.softmax(output, dim=-1)
+        # output = torch.softmax(output, dim=-1)
         return output
         # print(f'finished layer, {input_embeddings.shape = }')
         # return torch.softmax(self.linear(input_embeddings), dim=-1)
