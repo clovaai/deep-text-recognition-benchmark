@@ -36,8 +36,8 @@ def scaled_dot_product_attention(query: torch.Tensor, key: torch.Tensor, value: 
         index = (mask == 0).repeat(batch_size, 1, 1)
         # q_k[index] = -1e9#-float('inf')
         q_k[index] = -float('inf')
-        print(f'{torch.argmax(q_k, dim=-1) = }')
-        print(f'{q_k = }')
+        # print(f'{torch.argmax(q_k, dim=-1) = }')
+        # print(f'{q_k = }')
         # raise Exception
 
     # softmax (above)
