@@ -129,7 +129,7 @@ class TorchDecoderWrapper(nn.Module):
     def __init__(self, 
                 d_model: int, num_layers: int,
                 num_output: int, embedding_dim: int,
-                seq_length: int
+                seq_length: int, learnable_embeddings: bool
             ) -> None:
         super().__init__()
         self.model = nn.TransformerDecoder(
@@ -142,8 +142,10 @@ class TorchDecoderWrapper(nn.Module):
         self.word_embeddings = nn.Embedding(num_embeddings=num_output, embedding_dim=embedding_dim)
         self.linear = nn.Linear(in_features=embedding_dim,out_features=num_output)
         self.seq_length = seq_length
-        self.position_embeddings = SinPositionalEncoding(d_model=d_model, max_len=seq_length)
-        self.position_embeddings = PositionalEmbedding(learnable=True, num_embeddings=seq_length, embedding_dim=d_model)
+        if learnable_embeddings:
+            self.position_embeddings = PositionalEmbedding(learnable=True, num_embeddings=seq_length, embedding_dim=d_model)
+        else:
+            self.position_embeddings = SinPositionalEncoding(d_model=d_model, max_len=seq_length)
 
     def forward(self, text: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
         text_embed = self.word_embeddings(text)

@@ -73,7 +73,8 @@ class Model(nn.Module):
                 self.Prediction = TorchDecoderWrapper(
                     d_model=self.SequenceModeling_output, num_layers=opt.decoder_layers,
                     num_output=opt.num_class, embedding_dim=opt.hidden_size,
-                    seq_length=opt.batch_max_length + 1
+                    seq_length=opt.batch_max_length + 1,
+                    learnable_embeddings=opt.learnable_pos_embeddings,
                 )
             else:
                 self.Prediction = TransformerDecoder(
