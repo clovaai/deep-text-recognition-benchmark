@@ -154,8 +154,8 @@ class TorchDecoderWrapper(nn.Module):
         text_embed += positional_embeddings
         decoder_out = self.model(text_embed, memory, tgt_mask=mask)
         class_out = self.linear(decoder_out)
-        class_probs = torch.softmax(class_out, dim=-1)
-        return class_probs
+        # class_probs = torch.softmax(class_out, dim=-1)
+        return class_out
 
 class TransformerDecoder(nn.Module):
     def __init__(
