@@ -236,14 +236,17 @@ class TransformerDecoderLayer(nn.Module):
             dropout,
         )
 
-    def forward(self, tgt: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None) -> torch.Tensor:
-        # print(f'{tgt.shape = }, {mask.shape = }, {memory.shape = }')
-        # print(f'starting first attention')
+    def forward(self, tgt: torch.Tensor, memory: torch.Tensor, mask: torch.Tensor=None, debug: bool=False) -> torch.Tensor:
+        if debug:
+            print(f'{tgt.shape = }, {mask.shape = }, {memory.shape = }')
+            print(f'starting first attention')
         tgt = self.attention_1(tgt, tgt, tgt, mask)
-        # print(f'finished first attention')
-        # print(f'{tgt.shape = }, {mask.shape = }, {memory.shape = }')
+        if debug:
+            print(f'finished first attention')
+            print(f'{tgt.shape = }, {mask.shape = }, {memory.shape = }')
         tgt = self.attention_2(tgt, memory, memory)
-        # print(f'finished second attention')
+        if debug:
+            print(f'finished second attention')
         return self.feed_forward(tgt)
     
 class TransformerDecoder(nn.Module):

@@ -152,7 +152,7 @@ class TransformerDecoder(nn.Module):
         self.learnable_embeddings = learnable_embeddings
         self.dim_model = dim_model
 
-    def forward(self, input_ids: torch.Tensor, encoded_memory: torch.Tensor, mask: torch.Tensor=None):
+    def forward(self, input_ids: torch.Tensor, encoded_memory: torch.Tensor, mask: torch.Tensor=None, debug: bool=False):
         input_shape = input_ids.shape
         seq_length = input_shape[1]
 
@@ -164,7 +164,7 @@ class TransformerDecoder(nn.Module):
 
         # print(f'starting first decoder layer {input_embeddings.shape = }')
         for layer in self.layers:
-            input_embeddings = layer(input_embeddings, encoded_memory, mask)
+            input_embeddings = layer(input_embeddings, encoded_memory, mask, debug=debug)
             # print(f'going next decoder layer')
         
         output = self.linear(input_embeddings)

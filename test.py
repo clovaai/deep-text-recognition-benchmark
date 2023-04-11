@@ -120,7 +120,11 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             preds_str = converter.decode(preds_index.data, preds_size.data)
         
         else:
-            preds = model(image, text_for_pred, is_train=False)
+            if 'Attn' in opt.Prediction:
+                preds = model(image, text_for_pred, is_train=False)
+            else:
+                preds = model(image, text_for_pred, is_train=True)
+
             forward_time = time.time() - start_time
 
             preds = preds[:, :text_for_loss.shape[1] - 1, :]
