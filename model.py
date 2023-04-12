@@ -137,15 +137,12 @@ class Model(nn.Module):
             # target_tensor = torch.Tensor(
             #     [[0] * self.opt.batch_max_length for _ in range(batch_size)]
             # ).int()
-            if is_train:
-                # + 1 because it'll be first text.... <EOS>
-                if type(self.Prediction) is TransformerDecoder:
-                    mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length + 1)
-                else:
-                    mask = nn.Transformer.generate_square_subsequent_mask(self.Prediction.seq_length, device= 'cuda' if torch.cuda.is_available() else 'cpu')
+            # + 1 because it'll be first text.... <EOS>
+            if type(self.Prediction) is TransformerDecoder:
+                mask = self.Prediction.generate_attn_mask(self.opt.batch_max_length + 1)
             else:
-                mask = None
-            
+                mask = nn.Transformer.generate_square_subsequent_mask(self.Prediction.seq_length, device= 'cuda' if torch.cuda.is_available() else 'cpu')
+
             # mask = torch.ones((1,1))
             target_tensor = text
 

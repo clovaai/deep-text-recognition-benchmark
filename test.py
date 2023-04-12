@@ -120,10 +120,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             preds_str = converter.decode(preds_index.data, preds_size.data)
         
         else:
-            if 'Attn' in opt.Prediction:
-                preds = model(image, text_for_pred, is_train=False)
-            else:
-                preds = model(image, text_for_pred, is_train=True)
+            preds = model(image, text_for_pred, is_train=False)
 
             forward_time = time.time() - start_time
 
