@@ -27,7 +27,7 @@ The difference between our paper and ICDAR challenge is summarized [here](https:
 In the paper, expriments were performed with **PyTorch 0.4.1, CUDA 9.0**.
 - requirements : lmdb, pillow, torchvision, nltk, natsort
 ```
-pip3 install lmdb pillow torchvision nltk natsort
+pip3 install lmdb pillow torchvision nltk natsort tqdm
 ```
 
 ### Download lmdb dataset for traininig and evaluation from [here](https://www.dropbox.com/sh/i39abvnefllx2si/AAAbAYRvxzRp3cIE5HzqUw3ra?dl=0)
