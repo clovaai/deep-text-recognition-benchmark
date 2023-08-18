@@ -32,8 +32,20 @@ class CTCLabelConverter(object):
         batch_text = torch.LongTensor(len(text), batch_max_length).fill_(0)
         for i, t in enumerate(text):
             text = list(t)
-            text = [self.dict[char] for char in text]
-            batch_text[i][:len(text)] = torch.LongTensor(text)
+            # Could occur Dict Key Error. So, should check 'char' in self.dict.
+            # If there isn't char in self.dict, it will be ignored.
+            # Should drop all data including that char. because it could make train worse.
+            text_index = []
+            for char in text:
+                if char not in self.dict:
+                    text_index = []
+                    break
+                text_index.append(self.dict[char])
+
+            batch_text[i][:len(text_index)] = torch.LongTensor(text_index)
+
+            #text = [self.dict[char] for char in text if char in self.dict]
+            #batch_text[i][:len(text)] = torch.LongTensor(text)
         return (batch_text.to(device), torch.IntTensor(length).to(device))
 
     def decode(self, text_index, length):
