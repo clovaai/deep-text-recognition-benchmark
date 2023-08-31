@@ -105,7 +105,7 @@ class AttnLabelConverter(object):
     def __init__(self, character):
         # character (str): set of the possible characters.
         # [GO] for the start token of the attention decoder. [s] for end-of-sentence token.
-        list_token = ['[GO]', '[s]']  # ['[s]','[UNK]','[PAD]','[GO]']
+        list_token = ['[GO]', '[s]','[UNK]']  # ['[s]','[PAD]','[GO]']
         list_character = list(character)
         self.character = list_token + list_character
 
