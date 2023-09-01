@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     """ vocab / character number configuration """
     if opt.sensitive:
-        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        opt.character = string.printable[:-38]  # same with ASTER setting (use 94 char).
 
     cudnn.benchmark = True
     cudnn.deterministic = True
